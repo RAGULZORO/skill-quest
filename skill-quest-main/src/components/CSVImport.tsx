@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Upload, Download, CheckCircle2, AlertCircle, Loader2, FileText, X } from 'lucide-react';
+import { Upload, Download, CheckCircle2, AlertCircle, Loader2, FileText, X, FileCheck, ArrowRight, Info, Code2 } from 'lucide-react';
 import { validateAndParseCSV, formatForDatabase, ParsedQuestion } from '@/lib/csvParser';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -250,33 +250,181 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
   const validCount = parsedQuestions.filter(q => q.errors.length === 0).length;
   const invalidCount = parsedQuestions.length - validCount;
 
+  // Get Technical Round specific format info
+  const getTechnicalFormatInfo = () => {
+    if (type !== 'technical') return null;
+    return {
+      columns: ['title', 'category', 'difficulty', 'level', 'description', 'solution', 'approach'],
+      categories: ['Arrays', 'Strings', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming', 'Sorting', 'Searching'],
+      difficulties: ['Easy', 'Medium', 'Hard'],
+      levels: ['1', '2', '3', '4']
+    };
+  };
+
+  const formatInfo = getTechnicalFormatInfo();
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="h-5 w-5" />
+    <Card className="w-full">
+      <CardHeader className="border-b border-border pb-4">
+        <CardTitle className="flex items-center gap-3 text-2xl">
+          {type === 'technical' ? (
+            <Code2 className="h-6 w-6 text-accent" />
+          ) : (
+            <Upload className="h-6 w-6" />
+          )}
           Bulk Import {getTypeLabel()} Questions
         </CardTitle>
-        <CardDescription>
-          Upload a CSV file to add multiple questions at once
+        <CardDescription className="text-base mt-2">
+          Upload a CSV file to add multiple questions at once. Import up to 100 questions in seconds.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-6">
-        {/* File Upload Section */}
-        <div className="border-2 border-dashed border-border rounded-lg p-6">
-          <div className="flex flex-col items-center gap-4">
-            <FileText className="h-10 w-10 text-muted-foreground" />
-            <div className="text-center">
-              <p className="font-medium text-foreground mb-1">
-                {file ? file.name : 'Select CSV file'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {file ? 'Ready to validate' : 'Drop file or click to browse'}
-              </p>
+      <CardContent className="space-y-6 pt-6">
+        {/* Step-by-Step Guide for Technical */}
+        {type === 'technical' && (
+          <div className="bg-accent/5 border border-accent/20 rounded-lg p-5 mb-4">
+            <div className="flex items-start gap-3 mb-4">
+              <Info className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-3">Quick Start Guide</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-sm">1</div>
+                    <div>
+                      <p className="font-medium text-sm text-foreground">Download Template</p>
+                      <p className="text-xs text-muted-foreground">Get the correct CSV format</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-sm">2</div>
+                    <div>
+                      <p className="font-medium text-sm text-foreground">Fill Your Data</p>
+                      <p className="text-xs text-muted-foreground">Add your questions in Excel</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-sm">3</div>
+                    <div>
+                      <p className="font-medium text-sm text-foreground">Upload & Import</p>
+                      <p className="text-xs text-muted-foreground">Validate and import questions</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
+        )}
 
-            <div className="flex gap-2">
+        {/* CSV Format Requirements - Technical Specific */}
+        {type === 'technical' && formatInfo && (
+          <Card className="bg-muted/30 border-2 border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileCheck className="h-5 w-5 text-accent" />
+                Required CSV Format
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground mb-2">CSV Columns (in order):</p>
+                <div className="flex flex-wrap gap-2">
+                  {formatInfo.columns.map((col, idx) => (
+                    <div key={col} className="flex items-center gap-2">
+                      <span className="px-3 py-1.5 bg-accent/10 text-accent rounded-md text-xs font-mono font-semibold border border-accent/20">
+                        {col}
+                      </span>
+                      {idx < formatInfo.columns.length - 1 && (
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-3 gap-4 pt-2 border-t border-border">
+                <div>
+                  <p className="text-xs font-semibold text-foreground mb-1.5">Valid Categories:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {formatInfo.categories.slice(0, 4).map(cat => (
+                      <span key={cat} className="px-2 py-1 bg-background border border-border rounded text-xs text-muted-foreground">
+                        {cat}
+                      </span>
+                    ))}
+                    <span className="px-2 py-1 text-xs text-muted-foreground">+{formatInfo.categories.length - 4} more</span>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground mb-1.5">Difficulty Levels:</p>
+                  <div className="flex gap-1.5">
+                    {formatInfo.difficulties.map(diff => (
+                      <span key={diff} className="px-2 py-1 bg-background border border-border rounded text-xs text-muted-foreground">
+                        {diff}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground mb-1.5">Question Levels:</p>
+                  <div className="flex gap-1.5">
+                    {formatInfo.levels.map(lev => (
+                      <span key={lev} className="px-2 py-1 bg-background border border-border rounded text-xs text-muted-foreground font-mono">
+                        {lev}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Enhanced File Upload Section */}
+        <div className={`border-2 border-dashed rounded-xl p-8 transition-all ${
+          file 
+            ? 'border-accent bg-accent/5' 
+            : 'border-border hover:border-accent/50 hover:bg-muted/30'
+        }`}>
+          <div className="flex flex-col items-center gap-6">
+            {!file ? (
+              <>
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center">
+                    <FileText className="h-10 w-10 text-accent" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-8 h-8 rounded-full bg-accent flex items-center justify-center">
+                    <Upload className="h-4 w-4 text-accent-foreground" />
+                  </div>
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-lg font-semibold text-foreground">
+                    Select Your CSV File
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    {type === 'technical' 
+                      ? 'Upload a CSV file containing your technical questions. Make sure it follows the format shown above.'
+                      : 'Drop your CSV file here or click browse to select from your computer'
+                    }
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
+                  <CheckCircle2 className="h-8 w-8 text-success" />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-lg font-semibold text-foreground flex items-center justify-center gap-2">
+                    <FileText className="h-5 w-5 text-accent" />
+                    {file.name}
+                  </p>
+                  <p className="text-sm text-success font-medium">
+                    File selected and ready to validate
+                  </p>
+                </div>
+              </>
+            )}
+
+            <div className="flex flex-wrap gap-3 justify-center">
               <input
                 type="file"
                 accept=".csv"
@@ -285,15 +433,20 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
                 id="csv-upload"
               />
               <Button
-                variant="outline"
+                size="lg"
+                variant={file ? "outline" : "default"}
                 onClick={() => document.getElementById('csv-upload')?.click()}
+                className="min-w-[140px]"
               >
-                Browse Files
+                <Upload className="h-4 w-4 mr-2" />
+                {file ? 'Change File' : 'Browse Files'}
               </Button>
 
               <Button
+                size="lg"
                 variant="outline"
                 onClick={downloadTemplate}
+                className="min-w-[180px]"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download Template
@@ -301,15 +454,16 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
 
               {file && (
                 <Button
+                  size="lg"
                   variant="ghost"
-                  size="icon"
                   onClick={() => {
                     setFile(null);
                     setParsedQuestions([]);
                     setValidationErrors([]);
                   }}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 mr-2" />
+                  Clear
                 </Button>
               )}
             </div>
@@ -345,29 +499,51 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
           </Alert>
         )}
 
-        {/* Validation Summary */}
+        {/* Enhanced Validation Summary */}
         {parsedQuestions.length > 0 && (
-          <div className="bg-card border border-border rounded-lg p-4 space-y-3">
-            <h3 className="font-medium">Import Summary</h3>
+          <Card className="border-2 border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-success" />
+                Validation Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-lg bg-background border-2 border-border">
+                  <p className="text-3xl font-bold text-foreground mb-1">{parsedQuestions.length}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Rows</p>
+                  <p className="text-xs text-muted-foreground mt-1">Found in CSV file</p>
+                </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="text-center p-3 rounded-lg bg-background">
-                <p className="text-2xl font-bold text-foreground">{parsedQuestions.length}</p>
-                <p className="text-xs text-muted-foreground">Total Rows</p>
-              </div>
+                <div className="text-center p-4 rounded-lg bg-success/10 border-2 border-success/30">
+                  <p className="text-3xl font-bold text-success mb-1">{validCount}</p>
+                  <p className="text-sm font-medium text-success">Valid Questions</p>
+                  <p className="text-xs text-success/70 mt-1">Ready to import</p>
+                </div>
 
-              <div className="text-center p-3 rounded-lg bg-success/5 border border-success/20">
-                <p className="text-2xl font-bold text-success">{validCount}</p>
-                <p className="text-xs text-muted-foreground">Valid</p>
+                <div className={`text-center p-4 rounded-lg border-2 ${
+                  invalidCount > 0 
+                    ? 'bg-destructive/10 border-destructive/30' 
+                    : 'bg-background border-border'
+                }`}>
+                  <p className={`text-3xl font-bold mb-1 ${
+                    invalidCount > 0 ? 'text-destructive' : 'text-foreground'
+                  }`}>
+                    {invalidCount}
+                  </p>
+                  <p className={`text-sm font-medium ${
+                    invalidCount > 0 ? 'text-destructive' : 'text-muted-foreground'
+                  }`}>
+                    Invalid Questions
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    invalidCount > 0 ? 'text-destructive/70' : 'text-muted-foreground'
+                  }`}>
+                    {invalidCount > 0 ? 'Check errors below' : 'No errors found'}
+                  </p>
+                </div>
               </div>
-
-              <div className={`text-center p-3 rounded-lg ${invalidCount > 0 ? 'bg-destructive/5 border border-destructive/20' : 'bg-background'}`}>
-                <p className={`text-2xl font-bold ${invalidCount > 0 ? 'text-destructive' : 'text-foreground'}`}>
-                  {invalidCount}
-                </p>
-                <p className="text-xs text-muted-foreground">Invalid</p>
-              </div>
-            </div>
 
             {/* Import Progress Bar */}
             {importProgress && (
@@ -382,7 +558,7 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
 
             {/* Questions Preview */}
             {validCount > 0 && (
-              <div className="bg-background border border-success/20 rounded p-3">
+              <div className="bg-background border border-success/20 rounded-lg p-4">
                 <p className="text-sm font-medium text-success flex items-center gap-2 mb-2">
                   <CheckCircle2 className="h-4 w-4" />
                   Ready to Import
@@ -392,15 +568,18 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
                 </p>
               </div>
             )}
-          </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 justify-end">
+        <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2">
           {parsedQuestions.length === 0 && file && (
             <Button
+              size="lg"
               onClick={handleValidate}
               disabled={isLoading}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground min-w-[160px]"
             >
               {isLoading ? (
                 <>
@@ -408,16 +587,20 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
                   Validating...
                 </>
               ) : (
-                'Validate CSV'
+                <>
+                  <FileCheck className="h-4 w-4 mr-2" />
+                  Validate CSV
+                </>
               )}
             </Button>
           )}
 
           {validCount > 0 && (
             <Button
+              size="lg"
               onClick={handleImport}
               disabled={isLoading}
-              className="bg-success hover:bg-success/90"
+              className="bg-success hover:bg-success/90 text-success-foreground min-w-[200px]"
             >
               {isLoading ? (
                 <>
@@ -434,17 +617,25 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
           )}
         </div>
 
-        {/* Help Text */}
-        <div className="bg-background border border-border rounded-lg p-4 text-sm text-muted-foreground space-y-2">
-          <p className="font-medium text-foreground">CSV Format Guidelines:</p>
-          <ul className="list-disc list-inside space-y-1">
-            <li>First row must contain column headers</li>
-            <li>All required fields must be filled</li>
-            <li>Use correct data types (numbers for level, etc.)</li>
-            <li>Download the template above for the exact format</li>
-            <li>Maximum 100 questions per import (for performance)</li>
-          </ul>
-        </div>
+        {/* Enhanced Help Text */}
+        <Card className="bg-muted/20 border-border">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Info className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+              <div className="flex-1 space-y-3">
+                <p className="font-semibold text-foreground">CSV Format Guidelines:</p>
+                <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                  <li><strong className="text-foreground">Headers Required:</strong> First row must contain exact column headers as shown in the template</li>
+                  <li><strong className="text-foreground">All Fields Required:</strong> Every required field must be filled (no empty cells)</li>
+                  <li><strong className="text-foreground">Data Types:</strong> Use numbers for level (1-4), exact strings for category and difficulty</li>
+                  <li><strong className="text-foreground">Quotes:</strong> Wrap text in quotes if it contains commas: <code className="bg-background px-1 py-0.5 rounded text-xs">"Text, with, commas"</code></li>
+                  <li><strong className="text-foreground">Template:</strong> Always download the template first to ensure correct format</li>
+                  <li><strong className="text-foreground">Limit:</strong> Maximum 100 questions per import for optimal performance</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </CardContent>
     </Card>
   );
