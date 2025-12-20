@@ -618,46 +618,46 @@ const Admin = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="aptitude" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10 max-w-7xl">
-            <TabsTrigger value="aptitude" className="flex items-center gap-2">
+          <TabsList className="flex w-full flex-wrap gap-2 bg-transparent border-b border-border p-0 h-auto justify-start overflow-x-auto">
+            <TabsTrigger value="aptitude" className="flex items-center gap-2 whitespace-nowrap">
               <Brain className="h-4 w-4" />
               <span className="hidden sm:inline">Aptitude</span>
             </TabsTrigger>
-            <TabsTrigger value="technical" className="flex items-center gap-2">
+            <TabsTrigger value="technical" className="flex items-center gap-2 whitespace-nowrap">
               <Code className="h-4 w-4" />
               <span className="hidden sm:inline">Technical</span>
             </TabsTrigger>
-            <TabsTrigger value="gd" className="flex items-center gap-2">
+            <TabsTrigger value="gd" className="flex items-center gap-2 whitespace-nowrap">
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">GD</span>
+              <span className="hidden sm:inline">GD Topics</span>
             </TabsTrigger>
-            <TabsTrigger value="manage-apt" className="flex items-center gap-1 text-xs">
+            <TabsTrigger value="manage-apt" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Trash2 className="h-3 w-3" />
-              <span>Manage</span>
+              <span>Manage Apt</span>
             </TabsTrigger>
-            <TabsTrigger value="manage-tech" className="flex items-center gap-1 text-xs">
+            <TabsTrigger value="manage-tech" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Trash2 className="h-3 w-3" />
-              <span>Manage</span>
+              <span>Manage Tech</span>
             </TabsTrigger>
-            <TabsTrigger value="manage-gd" className="flex items-center gap-1 text-xs">
+            <TabsTrigger value="manage-gd" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Trash2 className="h-3 w-3" />
-              <span>Manage</span>
+              <span>Manage GD</span>
             </TabsTrigger>
-            <TabsTrigger value="import-apt" className="flex items-center gap-1 text-xs">
+            <TabsTrigger value="import-apt" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Plus className="h-3 w-3" />
-              <span>Import</span>
+              <span>Import Apt</span>
             </TabsTrigger>
-            <TabsTrigger value="import-tech" className="flex items-center gap-1 text-xs">
+            <TabsTrigger value="import-tech" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Plus className="h-3 w-3" />
-              <span>Import</span>
+              <span>Import Tech</span>
             </TabsTrigger>
-            <TabsTrigger value="import-gd" className="flex items-center gap-1 text-xs">
+            <TabsTrigger value="import-gd" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Plus className="h-3 w-3" />
-              <span>Import</span>
+              <span>Import GD</span>
             </TabsTrigger>
-            <TabsTrigger value="progress" className="flex items-center gap-2">
+            <TabsTrigger value="progress" className="flex items-center gap-2 whitespace-nowrap">
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Progress</span>
+              <span className="hidden sm:inline">User Progress</span>
             </TabsTrigger>
           </TabsList>
 
