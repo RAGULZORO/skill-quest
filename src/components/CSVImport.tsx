@@ -45,15 +45,15 @@ Logical Reasoning,2,If A=1 B=2 C=3... Z=26 then M=?,10,11,12,13,2,M is the 13th 
 Verbal Ability,1,Select the correct spelling,Occassion,Occasion,Ocasion,Occassoin,1,Occasion is spelled with two c's and one s`;
 
       case 'technical':
-        return `title,category,difficulty,level,description,solution,approach
-Two Sum,Arrays,Easy,1,"Given an array of integers nums and an integer target, return indices of the two numbers.","return [i, j]","Use hash map to store values, O(n) time"
-Reverse String,Strings,Easy,1,"Write a function that reverses a string","s = s[::-1]","Can use two pointers or built-in reverse"
-Merge Sorted Arrays,Arrays,Medium,2,"Merge two sorted arrays without extra space","Use two pointers from end","Compare and place larger elements at the end"`;
+        return `title,category,difficulty,level,description,solution,approach,examples
+Two Sum,Arrays,Easy,1,"Given an array of integers nums and an integer target, return indices of the two numbers.","return [i, j]","Use hash map to store values, O(n) time","Input: [2,7,11,15] target=9; Output: [0,1]"
+Reverse String,Strings,Easy,1,"Write a function that reverses a string","s = s[::-1]","Can use two pointers or built-in reverse","Input: hello; Output: olleh"
+Merge Sorted Arrays,Arrays,Medium,2,"Merge two sorted arrays without extra space","Use two pointers from end","Compare and place larger elements at the end","Input: [1,2,3] [2,5,6]; Output: [1,2,2,3,5,6]"`;
 
       case 'gd':
-        return `title,category,level,description,points_for,points_against,conclusion
-AI in Healthcare,Technology,2,"Impact of artificial intelligence in healthcare sector","Improves diagnosis; Automates routine tasks; Reduces cost","Job displacement; Privacy concerns; Expensive setup","AI should be used as a tool to assist doctors, not replace them"
-Remote Work,Business,1,"Should companies promote remote work?","Better work-life balance; No commute; Higher productivity","Team cohesion issues; Communication challenges; Isolation","Hybrid model combining office and remote work is optimal"`;
+        return `title,category,level,description,points_for,points_against,tips,conclusion
+AI in Healthcare,Technology,2,"Impact of artificial intelligence in healthcare sector","Improves diagnosis; Automates routine tasks; Reduces cost","Job displacement; Privacy concerns; Expensive setup","Listen actively; Back claims with data; Stay respectful","AI should be used as a tool to assist doctors, not replace them"
+Remote Work,Business,1,"Should companies promote remote work?","Better work-life balance; No commute; Higher productivity","Team cohesion issues; Communication challenges; Isolation","Be balanced; Consider both sides; Use examples","Hybrid model combining office and remote work is optimal"`;
     }
   };
 
