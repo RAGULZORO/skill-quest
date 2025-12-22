@@ -94,6 +94,15 @@ const Dashboard = () => {
       stats: '100+ Topics',
       path: '/group-discussion',
     },
+    {
+      id: 'mock-test',
+      title: 'Mock Tests',
+      description: 'Timed tests with mixed questions to simulate real interviews',
+      icon: Clock,
+      color: 'from-primary to-secondary',
+      stats: 'Timed Practice',
+      path: '/mock-tests',
+    },
   ];
 
   const quickStats = [
