@@ -11,6 +11,8 @@ import Dashboard from "./pages/Dashboard";
 import Aptitude from "./pages/Aptitude";
 import Technical from "./pages/Technical";
 import GroupDiscussion from "./pages/GroupDiscussion";
+import MockTests from "./pages/MockTests";
+import MockTest from "./pages/MockTest";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -93,6 +95,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <GroupDiscussion />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mock-tests"
+        element={
+          <ProtectedRoute>
+            <MockTests />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mock-test/:level"
+        element={
+          <ProtectedRoute>
+            <MockTest />
           </ProtectedRoute>
         }
       />
