@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CSVImport } from '@/components/CSVImport';
+import { MockTestCSVImport } from '@/components/MockTestCSVImport';
 
 interface MockTest {
   id: string;
@@ -813,6 +814,10 @@ const Admin = () => {
             <TabsTrigger value="mock-tests" className="flex items-center gap-2 whitespace-nowrap" onClick={fetchMockTests}>
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Mock Tests</span>
+            </TabsTrigger>
+            <TabsTrigger value="import-mock" className="flex items-center gap-1 text-xs whitespace-nowrap">
+              <Plus className="h-3 w-3" />
+              <span>Import Mock</span>
             </TabsTrigger>
           </TabsList>
 
@@ -2174,6 +2179,11 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Mock Test CSV Import Tab */}
+          <TabsContent value="import-mock">
+            <MockTestCSVImport onRefresh={fetchMockTests} />
           </TabsContent>
         </Tabs>
       </main>
