@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Brain, Code, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search } from 'lucide-react';
+import { ArrowLeft, Brain, Code, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search, ClipboardList, Clock, Edit, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,10 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { CSVImport } from '@/components/CSVImport';
+
+interface MockTest {
+  id: string;
+  name: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  description: string | null;
+  total_questions: number;
+  time_minutes: number;
+  aptitude_questions: number;
+  technical_questions: number;
+  is_active: boolean;
+  created_at: string;
+}
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -99,6 +113,22 @@ const Admin = () => {
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [progressCategory, setProgressCategory] = useState<'all' | 'aptitude' | 'technical' | 'gd'>('all');
+
+  // Mock Tests state
+  const [mockTests, setMockTests] = useState<MockTest[]>([]);
+  const [loadingMockTests, setLoadingMockTests] = useState(false);
+  const [editingMockTestId, setEditingMockTestId] = useState<string | null>(null);
+  const [mockTestForm, setMockTestForm] = useState({
+    name: '',
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+    description: '',
+    total_questions: 20,
+    time_minutes: 30,
+    aptitude_questions: 15,
+    technical_questions: 5,
+    is_active: true
+  });
+  const [editMockTestForm, setEditMockTestForm] = useState<MockTest | null>(null);
 
   // Fetch question counts on component load
   useEffect(() => {
@@ -600,6 +630,127 @@ const Admin = () => {
     }
   };
 
+  // Mock Tests CRUD functions
+  const fetchMockTests = async () => {
+    setLoadingMockTests(true);
+    try {
+      const { data, error } = await supabase
+        .from('mock_tests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching mock tests:', error);
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        setMockTests((data || []) as MockTest[]);
+      }
+    } catch (error) {
+      console.error('Error fetching mock tests:', error);
+    }
+    setLoadingMockTests(false);
+  };
+
+  const handleMockTestSubmit = async () => {
+    if (!mockTestForm.name || mockTestForm.total_questions <= 0) {
+      toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase.from('mock_tests').insert({
+      name: mockTestForm.name,
+      difficulty: mockTestForm.difficulty,
+      description: mockTestForm.description || null,
+      total_questions: mockTestForm.total_questions,
+      time_minutes: mockTestForm.time_minutes,
+      aptitude_questions: mockTestForm.aptitude_questions,
+      technical_questions: mockTestForm.technical_questions,
+      is_active: mockTestForm.is_active,
+      created_by: user?.id
+    });
+
+    setSaving(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Mock test created!' });
+      setMockTestForm({
+        name: '',
+        difficulty: 'medium',
+        description: '',
+        total_questions: 20,
+        time_minutes: 30,
+        aptitude_questions: 15,
+        technical_questions: 5,
+        is_active: true
+      });
+      await fetchMockTests();
+    }
+  };
+
+  const handleUpdateMockTest = async () => {
+    if (!editMockTestForm?.name || editMockTestForm.total_questions <= 0) {
+      toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase
+      .from('mock_tests')
+      .update({
+        name: editMockTestForm.name,
+        difficulty: editMockTestForm.difficulty,
+        description: editMockTestForm.description,
+        total_questions: editMockTestForm.total_questions,
+        time_minutes: editMockTestForm.time_minutes,
+        aptitude_questions: editMockTestForm.aptitude_questions,
+        technical_questions: editMockTestForm.technical_questions,
+        is_active: editMockTestForm.is_active
+      })
+      .eq('id', editingMockTestId);
+
+    setSaving(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Mock test updated!' });
+      setEditingMockTestId(null);
+      setEditMockTestForm(null);
+      await fetchMockTests();
+    }
+  };
+
+  const handleDeleteMockTest = async (id: string) => {
+    if (confirm('Are you sure you want to delete this mock test? This action cannot be undone.')) {
+      const { error } = await supabase
+        .from('mock_tests')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Success', description: 'Mock test deleted!' });
+        await fetchMockTests();
+      }
+    }
+  };
+
+  const toggleMockTestStatus = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('mock_tests')
+      .update({ is_active: !currentStatus })
+      .eq('id', id);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `Mock test ${!currentStatus ? 'activated' : 'deactivated'}!` });
+      await fetchMockTests();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -658,6 +809,10 @@ const Admin = () => {
             <TabsTrigger value="progress" className="flex items-center gap-2 whitespace-nowrap">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">User Progress</span>
+            </TabsTrigger>
+            <TabsTrigger value="mock-tests" className="flex items-center gap-2 whitespace-nowrap" onClick={fetchMockTests}>
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Mock Tests</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1739,6 +1894,286 @@ const Admin = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Mock Tests Management Tab */}
+          <TabsContent value="mock-tests">
+            <div className="space-y-6">
+              {/* Create New Mock Test */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="h-5 w-5 text-primary" />
+                    Create New Mock Test
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Test Name *</Label>
+                      <Input
+                        value={mockTestForm.name}
+                        onChange={(e) => setMockTestForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Level 1 Assessment"
+                      />
+                    </div>
+                    <div>
+                      <Label>Difficulty</Label>
+                      <Select value={mockTestForm.difficulty} onValueChange={(v: 'easy' | 'medium' | 'hard') => setMockTestForm(prev => ({ ...prev, difficulty: v }))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="easy">Easy</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="hard">Hard</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      value={mockTestForm.description}
+                      onChange={(e) => setMockTestForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Brief description of this mock test..."
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label>Total Questions</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={mockTestForm.total_questions}
+                        onChange={(e) => setMockTestForm(prev => ({ ...prev, total_questions: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Time (minutes)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={mockTestForm.time_minutes}
+                        onChange={(e) => setMockTestForm(prev => ({ ...prev, time_minutes: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Aptitude Questions</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={mockTestForm.aptitude_questions}
+                        onChange={(e) => setMockTestForm(prev => ({ ...prev, aptitude_questions: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                    <div>
+                      <Label>Technical Questions</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={mockTestForm.technical_questions}
+                        onChange={(e) => setMockTestForm(prev => ({ ...prev, technical_questions: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={mockTestForm.is_active}
+                      onCheckedChange={(checked) => setMockTestForm(prev => ({ ...prev, is_active: checked }))}
+                    />
+                    <Label>Active (visible to users)</Label>
+                  </div>
+
+                  <Button onClick={handleMockTestSubmit} disabled={saving} className="w-full">
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? 'Saving...' : 'Create Mock Test'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Existing Mock Tests */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardList className="h-5 w-5 text-accent" />
+                    Manage Mock Tests
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button onClick={fetchMockTests} variant="outline" className="mb-4">
+                    {loadingMockTests ? 'Loading...' : 'Refresh Mock Tests'}
+                  </Button>
+
+                  {mockTests.length === 0 && !loadingMockTests && (
+                    <div className="text-center py-8">
+                      <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                      <p className="text-muted-foreground">No mock tests created yet</p>
+                    </div>
+                  )}
+
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto">
+                    {mockTests.map((test) => (
+                      <div key={test.id} className="p-4 border border-border rounded-lg bg-card">
+                        {editingMockTestId === test.id && editMockTestForm ? (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <Label>Test Name *</Label>
+                                <Input
+                                  value={editMockTestForm.name}
+                                  onChange={(e) => setEditMockTestForm(prev => prev ? { ...prev, name: e.target.value } : null)}
+                                />
+                              </div>
+                              <div>
+                                <Label>Difficulty</Label>
+                                <Select value={editMockTestForm.difficulty} onValueChange={(v: 'easy' | 'medium' | 'hard') => setEditMockTestForm(prev => prev ? { ...prev, difficulty: v } : null)}>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="easy">Easy</SelectItem>
+                                    <SelectItem value="medium">Medium</SelectItem>
+                                    <SelectItem value="hard">Hard</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label>Description</Label>
+                              <Textarea
+                                value={editMockTestForm.description || ''}
+                                onChange={(e) => setEditMockTestForm(prev => prev ? { ...prev, description: e.target.value } : null)}
+                                rows={2}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div>
+                                <Label>Total Questions</Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={editMockTestForm.total_questions}
+                                  onChange={(e) => setEditMockTestForm(prev => prev ? { ...prev, total_questions: parseInt(e.target.value) || 0 } : null)}
+                                />
+                              </div>
+                              <div>
+                                <Label>Time (minutes)</Label>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  value={editMockTestForm.time_minutes}
+                                  onChange={(e) => setEditMockTestForm(prev => prev ? { ...prev, time_minutes: parseInt(e.target.value) || 0 } : null)}
+                                />
+                              </div>
+                              <div>
+                                <Label>Aptitude Questions</Label>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={editMockTestForm.aptitude_questions}
+                                  onChange={(e) => setEditMockTestForm(prev => prev ? { ...prev, aptitude_questions: parseInt(e.target.value) || 0 } : null)}
+                                />
+                              </div>
+                              <div>
+                                <Label>Technical Questions</Label>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  value={editMockTestForm.technical_questions}
+                                  onChange={(e) => setEditMockTestForm(prev => prev ? { ...prev, technical_questions: parseInt(e.target.value) || 0 } : null)}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={editMockTestForm.is_active}
+                                onCheckedChange={(checked) => setEditMockTestForm(prev => prev ? { ...prev, is_active: checked } : null)}
+                              />
+                              <Label>Active</Label>
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button onClick={handleUpdateMockTest} disabled={saving} className="flex-1">
+                                <Save className="h-4 w-4 mr-2" />
+                                Save Changes
+                              </Button>
+                              <Button onClick={() => { setEditingMockTestId(null); setEditMockTestForm(null); }} variant="outline" className="flex-1">
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold text-foreground">{test.name}</h3>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  test.difficulty === 'easy' ? 'bg-success/10 text-success' :
+                                  test.difficulty === 'medium' ? 'bg-warning/10 text-warning' :
+                                  'bg-destructive/10 text-destructive'
+                                }`}>
+                                  {test.difficulty.charAt(0).toUpperCase() + test.difficulty.slice(1)}
+                                </span>
+                                <span className={`text-xs px-2 py-1 rounded ${test.is_active ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                                  {test.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                              </div>
+                              {test.description && (
+                                <p className="text-sm text-muted-foreground mb-2">{test.description}</p>
+                              )}
+                              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  {test.time_minutes} min
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Brain className="h-4 w-4" />
+                                  {test.aptitude_questions} aptitude
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Code className="h-4 w-4" />
+                                  {test.technical_questions} technical
+                                </span>
+                                <span>Total: {test.total_questions} questions</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => toggleMockTestStatus(test.id, test.is_active)}
+                              >
+                                <Power className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setEditingMockTestId(test.id);
+                                  setEditMockTestForm({ ...test });
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteMockTest(test.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
