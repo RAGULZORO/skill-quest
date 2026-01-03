@@ -92,6 +92,63 @@ export type Database = {
         }
         Relationships: []
       }
+      mock_tests: {
+        Row: {
+          aptitude_levels: number[] | null
+          aptitude_questions: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty: string
+          gd_levels: number[] | null
+          gd_questions: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          technical_levels: number[] | null
+          technical_questions: number | null
+          time_minutes: number
+          total_questions: number
+          updated_at: string | null
+        }
+        Insert: {
+          aptitude_levels?: number[] | null
+          aptitude_questions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty: string
+          gd_levels?: number[] | null
+          gd_questions?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          technical_levels?: number[] | null
+          technical_questions?: number | null
+          time_minutes: number
+          total_questions: number
+          updated_at?: string | null
+        }
+        Update: {
+          aptitude_levels?: number[] | null
+          aptitude_questions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string
+          gd_levels?: number[] | null
+          gd_questions?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          technical_levels?: number[] | null
+          technical_questions?: number | null
+          time_minutes?: number
+          total_questions?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
