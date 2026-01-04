@@ -107,7 +107,7 @@ const AppRoutes = () => {
         }
       />
       <Route
-        path="/mock-test/:level"
+        path="/mock-test/:testId"
         element={
           <ProtectedRoute>
             <MockTest />
