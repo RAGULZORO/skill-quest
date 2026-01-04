@@ -16,6 +16,21 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface MockTestConfig {
+  id: string;
+  name: string;
+  description: string | null;
+  difficulty: string;
+  total_questions: number;
+  aptitude_questions: number | null;
+  technical_questions: number | null;
+  gd_questions: number | null;
+  aptitude_levels: number[] | null;
+  technical_levels: number[] | null;
+  gd_levels: number[] | null;
+  time_minutes: number;
+}
+
 interface Question {
   id: string;
   type: 'aptitude' | 'technical';
@@ -32,26 +47,25 @@ interface Answer {
 }
 
 const MockTest = () => {
-  const { level } = useParams<{ level: string }>();
+  const { testId } = useParams<{ testId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   
+  const [testConfig, setTestConfig] = useState<MockTestConfig | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(30 * 60); // Default 30 minutes
   const [showResults, setShowResults] = useState(false);
 
-  const levelNum = parseInt(level || '1');
-
   useEffect(() => {
-    if (user && level) {
-      fetchQuestions();
+    if (user && testId) {
+      fetchTestConfig();
     }
-  }, [user, level]);
+  }, [user, testId]);
 
   // Timer
   useEffect(() => {
@@ -76,62 +90,109 @@ const MockTest = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const fetchQuestions = async () => {
+  const fetchTestConfig = async () => {
     setLoading(true);
     try {
-      // Fetch 15 aptitude questions for this level
-      const { data: aptitudeData, error: aptitudeError } = await supabase
-        .from('aptitude_questions')
+      const { data, error } = await supabase
+        .from('mock_tests')
         .select('*')
-        .eq('level', levelNum)
-        .limit(15);
+        .eq('id', testId)
+        .maybeSingle();
 
-      if (aptitudeError) throw aptitudeError;
+      if (error) throw error;
+      if (!data) {
+        toast.error('Mock test not found');
+        navigate('/mock-tests');
+        return;
+      }
 
-      // Fetch 5 technical questions for this level
-      const { data: technicalData, error: technicalError } = await supabase
-        .from('technical_questions')
-        .select('*')
-        .eq('level', levelNum)
-        .limit(5);
+      setTestConfig(data);
+      setTimeLeft(data.time_minutes * 60);
+      await fetchQuestions(data);
+    } catch (error) {
+      console.error('Error fetching test config:', error);
+      toast.error('Failed to load test configuration');
+      navigate('/mock-tests');
+    }
+  };
 
-      if (technicalError) throw technicalError;
-
+  const fetchQuestions = async (config: MockTestConfig) => {
+    try {
       const formattedQuestions: Question[] = [];
 
-      // Format aptitude questions
-      aptitudeData?.forEach((q: any, idx: number) => {
-        formattedQuestions.push({
-          id: `mock_level_${levelNum}_aptitude_${idx}`,
-          type: 'aptitude',
-          question: q.question,
-          options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
-          correctAnswer: q.correct_answer,
-          explanation: q.explanation,
-        });
-      });
+      // Fetch aptitude questions if configured
+      if ((config.aptitude_questions || 0) > 0) {
+        let aptitudeQuery = supabase
+          .from('aptitude_questions')
+          .select('*');
 
-      // Format technical questions (convert to MCQ format)
-      technicalData?.forEach((q: any, idx: number) => {
-        // Create MCQ-style options from technical question
-        const options = [
-          q.solution?.substring(0, 100) + '...' || 'Option A',
-          'Incorrect approach 1',
-          'Incorrect approach 2', 
-          'Incorrect approach 3',
-        ];
-        
-        formattedQuestions.push({
-          id: `mock_level_${levelNum}_technical_${idx}`,
-          type: 'technical',
-          question: q.title + ': ' + q.description,
-          options: options,
-          correctAnswer: 0, // First option is correct (the solution)
-          explanation: q.approach,
-        });
-      });
+        // Filter by levels if specified
+        if (config.aptitude_levels && config.aptitude_levels.length > 0) {
+          aptitudeQuery = aptitudeQuery.in('level', config.aptitude_levels);
+        }
 
-      // Shuffle questions
+        const { data: aptitudeData, error: aptitudeError } = await aptitudeQuery;
+
+        if (aptitudeError) throw aptitudeError;
+
+        // Shuffle and limit to configured count
+        const shuffledAptitude = (aptitudeData || [])
+          .sort(() => Math.random() - 0.5)
+          .slice(0, config.aptitude_questions || 0);
+
+        shuffledAptitude.forEach((q: any) => {
+          formattedQuestions.push({
+            id: q.id,
+            type: 'aptitude',
+            question: q.question,
+            options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
+            correctAnswer: q.correct_answer,
+            explanation: q.explanation,
+          });
+        });
+      }
+
+      // Fetch technical questions if configured
+      if ((config.technical_questions || 0) > 0) {
+        let technicalQuery = supabase
+          .from('technical_questions')
+          .select('*');
+
+        // Filter by levels if specified
+        if (config.technical_levels && config.technical_levels.length > 0) {
+          technicalQuery = technicalQuery.in('level', config.technical_levels);
+        }
+
+        const { data: technicalData, error: technicalError } = await technicalQuery;
+
+        if (technicalError) throw technicalError;
+
+        // Shuffle and limit to configured count
+        const shuffledTechnical = (technicalData || [])
+          .sort(() => Math.random() - 0.5)
+          .slice(0, config.technical_questions || 0);
+
+        shuffledTechnical.forEach((q: any) => {
+          // Create MCQ-style options from technical question
+          const options = [
+            q.solution?.substring(0, 100) + '...' || 'Option A',
+            'Incorrect approach 1',
+            'Incorrect approach 2', 
+            'Incorrect approach 3',
+          ];
+          
+          formattedQuestions.push({
+            id: q.id,
+            type: 'technical',
+            question: q.title + ': ' + q.description,
+            options: options,
+            correctAnswer: 0, // First option is correct (the solution)
+            explanation: q.approach,
+          });
+        });
+      }
+
+      // Shuffle all questions together
       const shuffled = formattedQuestions.sort(() => Math.random() - 0.5);
       setQuestions(shuffled);
 
@@ -168,17 +229,17 @@ const MockTest = () => {
   };
 
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || !testConfig) return;
     
     setSubmitting(true);
     try {
-      // Save progress to database
+      // Save progress to database with mock_test_id prefix for tracking
       const progressEntries = Object.values(answers).map((answer) => ({
         user_id: user?.id,
-        question_id: answer.questionId,
+        question_id: `${testId}_${answer.questionId}`,
         question_type: 'mock_test',
         is_correct: answer.isCorrect,
-        time_spent_seconds: Math.floor((30 * 60 - timeLeft) / questions.length),
+        time_spent_seconds: Math.floor((testConfig.time_minutes * 60 - timeLeft) / questions.length),
       }));
 
       const { error } = await supabase
@@ -203,6 +264,7 @@ const MockTest = () => {
   };
 
   const getPercentage = () => {
+    if (questions.length === 0) return 0;
     return Math.round((getScore() / questions.length) * 100);
   };
 
@@ -229,7 +291,7 @@ const MockTest = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
               <Target className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Level {levelNum} Results</span>
+            <span className="text-xl font-bold text-foreground">{testConfig?.name} - Results</span>
           </div>
         </header>
 
@@ -250,7 +312,7 @@ const MockTest = () => {
             </h1>
             <p className="text-muted-foreground mb-8">
               {passed 
-                ? `You've passed Level ${levelNum}! ${levelNum < 3 ? 'Level ' + (levelNum + 1) + ' is now unlocked.' : 'You\'ve completed all levels!'}`
+                ? `You've passed ${testConfig?.name}! The next level is now unlocked.`
                 : `You need 80% to pass. Try again to unlock the next level.`
               }
             </p>
@@ -282,21 +344,41 @@ const MockTest = () => {
 
             <div className="flex gap-4 justify-center">
               <Button variant="outline" onClick={() => navigate('/mock-tests')}>
-                Back to Levels
+                Back to Mock Tests
               </Button>
               {!passed && (
                 <Button onClick={() => window.location.reload()}>
                   Try Again
                 </Button>
               )}
-              {passed && levelNum < 3 && (
-                <Button onClick={() => navigate(`/mock-test/${levelNum + 1}`)}>
-                  Next Level
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              )}
             </div>
           </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-50 glass border-b border-border">
+          <div className="container mx-auto px-4 py-4 flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/mock-tests')}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground">{testConfig?.name}</span>
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-12 text-center">
+          <Target className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">No Questions Available</h2>
+          <p className="text-muted-foreground mb-6">
+            This test doesn't have any questions configured yet.
+          </p>
+          <Button onClick={() => navigate('/mock-tests')}>Back to Mock Tests</Button>
         </main>
       </div>
     );
@@ -324,7 +406,7 @@ const MockTest = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center">
               <Target className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">Level {levelNum}</span>
+            <span className="text-xl font-bold text-foreground">{testConfig?.name}</span>
           </div>
 
           <div className="flex items-center gap-4">
@@ -405,7 +487,7 @@ const MockTest = () => {
               Previous
             </Button>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap justify-center max-w-md">
               {questions.map((_, idx) => (
                 <button
                   key={idx}
