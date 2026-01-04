@@ -13,6 +13,18 @@ import {
   FileText
 } from 'lucide-react';
 
+interface MockTest {
+  id: string;
+  name: string;
+  description: string | null;
+  difficulty: string;
+  total_questions: number;
+  aptitude_questions: number | null;
+  technical_questions: number | null;
+  time_minutes: number;
+  is_active: boolean | null;
+}
+
 interface LevelProgress {
   completed: boolean;
   score: number;
@@ -22,18 +34,34 @@ interface LevelProgress {
 const MockTests = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [levelProgress, setLevelProgress] = useState<Record<number, LevelProgress>>({
-    1: { completed: false, score: 0, totalQuestions: 20 },
-    2: { completed: false, score: 0, totalQuestions: 20 },
-    3: { completed: false, score: 0, totalQuestions: 20 },
-  });
+  const [mockTests, setMockTests] = useState<MockTest[]>([]);
+  const [levelProgress, setLevelProgress] = useState<Record<string, LevelProgress>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    fetchMockTests();
+  }, []);
+
+  useEffect(() => {
+    if (user && mockTests.length > 0) {
       fetchProgress();
     }
-  }, [user]);
+  }, [user, mockTests]);
+
+  const fetchMockTests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('mock_tests')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setMockTests(data || []);
+    } catch (error) {
+      console.error('Error fetching mock tests:', error);
+    }
+  };
 
   const fetchProgress = async () => {
     if (!user) return;
@@ -48,37 +76,28 @@ const MockTests = () => {
 
       if (error) throw error;
 
-      const progressByLevel: Record<number, { correct: number; total: number }> = {};
+      const progressByTest: Record<string, { correct: number; total: number }> = {};
       
       data?.forEach((record: any) => {
-        const match = record.question_id.match(/mock_level_(\d+)/);
-        if (match) {
-          const level = parseInt(match[1]);
-          if (!progressByLevel[level]) {
-            progressByLevel[level] = { correct: 0, total: 0 };
-          }
-          progressByLevel[level].total++;
-          if (record.is_correct) {
-            progressByLevel[level].correct++;
-          }
+        const testId = record.question_id.split('_')[0];
+        if (!progressByTest[testId]) {
+          progressByTest[testId] = { correct: 0, total: 0 };
+        }
+        progressByTest[testId].total++;
+        if (record.is_correct) {
+          progressByTest[testId].correct++;
         }
       });
 
-      const newLevelProgress: Record<number, LevelProgress> = {
-        1: { completed: false, score: 0, totalQuestions: 20 },
-        2: { completed: false, score: 0, totalQuestions: 20 },
-        3: { completed: false, score: 0, totalQuestions: 20 },
-      };
+      const newLevelProgress: Record<string, LevelProgress> = {};
 
-      Object.entries(progressByLevel).forEach(([level, progress]) => {
-        const levelNum = parseInt(level);
-        if (newLevelProgress[levelNum]) {
-          newLevelProgress[levelNum] = {
-            completed: progress.total >= 20,
-            score: progress.correct,
-            totalQuestions: 20
-          };
-        }
+      mockTests.forEach((test) => {
+        const progress = progressByTest[test.id];
+        newLevelProgress[test.id] = {
+          completed: progress ? progress.total >= test.total_questions : false,
+          score: progress?.correct || 0,
+          totalQuestions: test.total_questions
+        };
       });
 
       setLevelProgress(newLevelProgress);
@@ -89,42 +108,20 @@ const MockTests = () => {
     }
   };
 
-  const isLevelUnlocked = (level: number): boolean => {
-    if (level === 1) return true;
-    const prevLevel = levelProgress[level - 1];
-    if (!prevLevel) return false;
-    return prevLevel.completed && (prevLevel.score / prevLevel.totalQuestions) >= 0.8;
+  const isTestUnlocked = (index: number): boolean => {
+    if (index === 0) return true;
+    const prevTest = mockTests[index - 1];
+    if (!prevTest) return false;
+    const prevProgress = levelProgress[prevTest.id];
+    if (!prevProgress) return false;
+    return prevProgress.completed && (prevProgress.score / prevProgress.totalQuestions) >= 0.8;
   };
 
-  const getLevelStatus = (level: number): 'locked' | 'unlocked' | 'completed' => {
-    if (levelProgress[level]?.completed) return 'completed';
-    if (isLevelUnlocked(level)) return 'unlocked';
+  const getTestStatus = (testId: string, index: number): 'locked' | 'unlocked' | 'completed' => {
+    if (levelProgress[testId]?.completed) return 'completed';
+    if (isTestUnlocked(index)) return 'unlocked';
     return 'locked';
   };
-
-  const levels = [
-    {
-      level: 1,
-      title: 'Level 1 - Foundation',
-      description: 'Basic aptitude and technical questions to test your fundamentals',
-      aptitudeCount: 15,
-      technicalCount: 5,
-    },
-    {
-      level: 2,
-      title: 'Level 2 - Intermediate',
-      description: 'Medium difficulty questions to challenge your problem-solving skills',
-      aptitudeCount: 15,
-      technicalCount: 5,
-    },
-    {
-      level: 3,
-      title: 'Level 3 - Advanced',
-      description: 'Advanced questions to prepare you for tough interviews',
-      aptitudeCount: 15,
-      technicalCount: 5,
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -153,8 +150,7 @@ const MockTests = () => {
               Mock Test Levels
             </h1>
             <p className="text-muted-foreground">
-              Complete each level with 80% or higher to unlock the next level. 
-              Each level contains 15 aptitude and 5 technical questions.
+              Complete each level with 80% or higher to unlock the next level.
             </p>
           </div>
 
@@ -162,18 +158,24 @@ const MockTests = () => {
             <div className="flex justify-center py-12">
               <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
+          ) : mockTests.length === 0 ? (
+            <div className="text-center py-12">
+              <Target className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">No Mock Tests Available</h3>
+              <p className="text-muted-foreground">Check back later for new mock tests.</p>
+            </div>
           ) : (
             <div className="grid gap-6">
-              {levels.map((levelData, idx) => {
-                const status = getLevelStatus(levelData.level);
-                const progress = levelProgress[levelData.level];
+              {mockTests.map((test, idx) => {
+                const status = getTestStatus(test.id, idx);
+                const progress = levelProgress[test.id];
                 const percentage = progress?.completed 
                   ? Math.round((progress.score / progress.totalQuestions) * 100) 
                   : 0;
 
                 return (
                   <div
-                    key={levelData.level}
+                    key={test.id}
                     className={`relative bg-card rounded-3xl p-6 shadow-card border border-border transition-all duration-300 animate-slide-up ${
                       status === 'locked' 
                         ? 'opacity-60 cursor-not-allowed' 
@@ -182,7 +184,7 @@ const MockTests = () => {
                     style={{ animationDelay: `${idx * 0.1}s` }}
                     onClick={() => {
                       if (status !== 'locked') {
-                        navigate(`/mock-test/${levelData.level}`);
+                        navigate(`/mock-test/${test.id}`);
                       }
                     }}
                   >
@@ -199,15 +201,24 @@ const MockTests = () => {
                         ) : status === 'completed' ? (
                           <CheckCircle className="w-8 h-8 text-green-500" />
                         ) : (
-                          <span className="text-2xl font-bold text-white">{levelData.level}</span>
+                          <span className="text-2xl font-bold text-white">{idx + 1}</span>
                         )}
                       </div>
 
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-xl font-semibold text-foreground">
-                            {levelData.title}
+                            {test.name}
                           </h3>
+                          <span className={`text-xs font-medium px-3 py-1 rounded-full ${
+                            test.difficulty === 'Easy' 
+                              ? 'text-green-500 bg-green-500/10' 
+                              : test.difficulty === 'Medium' 
+                                ? 'text-yellow-500 bg-yellow-500/10' 
+                                : 'text-red-500 bg-red-500/10'
+                          }`}>
+                            {test.difficulty}
+                          </span>
                           {status === 'completed' && (
                             <span className="text-xs font-medium text-green-500 bg-green-500/10 px-3 py-1 rounded-full">
                               Completed - {percentage}%
@@ -221,21 +232,25 @@ const MockTests = () => {
                         </div>
                         
                         <p className="text-muted-foreground text-sm mb-4">
-                          {levelData.description}
+                          {test.description || 'Complete this mock test to assess your skills.'}
                         </p>
 
                         <div className="flex flex-wrap gap-4">
-                          <div className="flex items-center gap-2 text-sm">
-                            <FileText className="w-4 h-4 text-primary" />
-                            <span className="text-foreground">{levelData.aptitudeCount} Aptitude Questions</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Brain className="w-4 h-4 text-secondary" />
-                            <span className="text-foreground">{levelData.technicalCount} Technical Questions</span>
-                          </div>
+                          {(test.aptitude_questions || 0) > 0 && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <FileText className="w-4 h-4 text-primary" />
+                              <span className="text-foreground">{test.aptitude_questions} Aptitude</span>
+                            </div>
+                          )}
+                          {(test.technical_questions || 0) > 0 && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Brain className="w-4 h-4 text-secondary" />
+                              <span className="text-foreground">{test.technical_questions} Technical</span>
+                            </div>
+                          )}
                           <div className="flex items-center gap-2 text-sm">
                             <Clock className="w-4 h-4 text-accent" />
-                            <span className="text-foreground">~30 mins</span>
+                            <span className="text-foreground">{test.time_minutes} mins</span>
                           </div>
                         </div>
                       </div>
@@ -258,10 +273,10 @@ const MockTests = () => {
                       </div>
                     )}
 
-                    {status === 'locked' && levelData.level > 1 && (
+                    {status === 'locked' && idx > 0 && (
                       <div className="mt-4 pt-4 border-t border-border">
                         <p className="text-sm text-muted-foreground">
-                          Complete Level {levelData.level - 1} with 80% or higher to unlock this level.
+                          Complete "{mockTests[idx - 1]?.name}" with 80% or higher to unlock this level.
                         </p>
                       </div>
                     )}
