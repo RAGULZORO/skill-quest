@@ -49,6 +49,7 @@ const MockTests = () => {
   }, [user, mockTests]);
 
   const fetchMockTests = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('mock_tests')
@@ -60,6 +61,8 @@ const MockTests = () => {
       setMockTests(data || []);
     } catch (error) {
       console.error('Error fetching mock tests:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
