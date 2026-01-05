@@ -233,20 +233,40 @@ const MockTest = () => {
     
     setSubmitting(true);
     try {
-      // Save progress to database
+      const score = Object.values(answers).filter((a) => a.isCorrect).length;
+      const percentage = Math.round((score / questions.length) * 100);
+      const passed = percentage >= 80;
+      const timeTaken = testConfig.time_minutes * 60 - timeLeft;
+
+      // Save individual question progress
       const progressEntries = Object.values(answers).map((answer) => ({
         user_id: user?.id,
         question_id: answer.questionId,
         question_type: 'mock_test',
         is_correct: answer.isCorrect,
-        time_spent_seconds: Math.floor((testConfig.time_minutes * 60 - timeLeft) / questions.length),
+        time_spent_seconds: Math.floor(timeTaken / questions.length),
       }));
 
-      const { error } = await supabase
+      const { error: progressError } = await supabase
         .from('user_progress')
         .insert(progressEntries);
 
-      if (error) throw error;
+      if (progressError) throw progressError;
+
+      // Save overall test result
+      const { error: resultError } = await supabase
+        .from('mock_test_results')
+        .insert({
+          user_id: user?.id,
+          mock_test_id: testId,
+          score: score,
+          total_questions: questions.length,
+          percentage: percentage,
+          passed: passed,
+          time_taken_seconds: timeTaken,
+        });
+
+      if (resultError) throw resultError;
 
       setTestCompleted(true);
       setShowResults(true);

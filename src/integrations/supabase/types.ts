@@ -92,6 +92,50 @@ export type Database = {
         }
         Relationships: []
       }
+      mock_test_results: {
+        Row: {
+          completed_at: string
+          id: string
+          mock_test_id: string
+          passed: boolean
+          percentage: number
+          score: number
+          time_taken_seconds: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          mock_test_id: string
+          passed?: boolean
+          percentage: number
+          score: number
+          time_taken_seconds?: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          mock_test_id?: string
+          passed?: boolean
+          percentage?: number
+          score?: number
+          time_taken_seconds?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mock_test_results_mock_test_id_fkey"
+            columns: ["mock_test_id"]
+            isOneToOne: false
+            referencedRelation: "mock_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mock_tests: {
         Row: {
           aptitude_levels: number[] | null

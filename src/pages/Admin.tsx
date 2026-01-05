@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Brain, Code, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search, ClipboardList, Clock, Edit, Power } from 'lucide-react';
+import { ArrowLeft, Brain, Code, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search, ClipboardList, Clock, Edit, Power, Download, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -131,6 +131,25 @@ const Admin = () => {
   });
   const [editMockTestForm, setEditMockTestForm] = useState<MockTest | null>(null);
 
+  // Mock Test Results state
+  interface MockTestResult {
+    id: string;
+    user_id: string;
+    mock_test_id: string;
+    score: number;
+    total_questions: number;
+    percentage: number;
+    passed: boolean;
+    time_taken_seconds: number;
+    completed_at: string;
+    user_email?: string;
+    user_name?: string;
+    test_name?: string;
+  }
+  const [mockTestResults, setMockTestResults] = useState<MockTestResult[]>([]);
+  const [loadingResults, setLoadingResults] = useState(false);
+  const [resultsSearchQuery, setResultsSearchQuery] = useState('');
+
   // Fetch question counts on component load
   useEffect(() => {
     fetchAptitudeQuestionCounts();
@@ -231,6 +250,98 @@ const Admin = () => {
       toast({ title: 'Error', description: 'Failed to load user progress', variant: 'destructive' });
     }
     setLoadingProgress(false);
+  };
+
+  // Fetch mock test results
+  const fetchMockTestResults = async () => {
+    setLoadingResults(true);
+    try {
+      // Fetch all results
+      const { data: results, error: resultsError } = await supabase
+        .from('mock_test_results')
+        .select('*')
+        .order('completed_at', { ascending: false });
+
+      if (resultsError) throw resultsError;
+
+      // Get unique user IDs and mock test IDs
+      const userIds = [...new Set((results || []).map((r: any) => r.user_id))];
+      const testIds = [...new Set((results || []).map((r: any) => r.mock_test_id))];
+
+      // Fetch user profiles
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, email, full_name')
+        .in('user_id', userIds);
+
+      // Fetch mock test names
+      const { data: tests } = await supabase
+        .from('mock_tests')
+        .select('id, name')
+        .in('id', testIds);
+
+      // Map user and test data to results
+      const enrichedResults = (results || []).map((result: any) => {
+        const profile = profiles?.find((p: any) => p.user_id === result.user_id);
+        const test = tests?.find((t: any) => t.id === result.mock_test_id);
+        return {
+          ...result,
+          user_email: profile?.email || 'Unknown',
+          user_name: profile?.full_name || profile?.email || 'Unknown User',
+          test_name: test?.name || 'Unknown Test',
+        };
+      });
+
+      setMockTestResults(enrichedResults);
+    } catch (error) {
+      console.error('Error fetching mock test results:', error);
+      toast({ title: 'Error', description: 'Failed to load mock test results', variant: 'destructive' });
+    }
+    setLoadingResults(false);
+  };
+
+  // Download mock test results as CSV
+  const downloadResultsCSV = () => {
+    if (mockTestResults.length === 0) {
+      toast({ title: 'No Data', description: 'No results to download', variant: 'destructive' });
+      return;
+    }
+
+    const filteredResults = mockTestResults.filter(r =>
+      r.user_email?.toLowerCase().includes(resultsSearchQuery.toLowerCase()) ||
+      r.user_name?.toLowerCase().includes(resultsSearchQuery.toLowerCase()) ||
+      r.test_name?.toLowerCase().includes(resultsSearchQuery.toLowerCase())
+    );
+
+    const headers = ['User Name', 'Email', 'Test Name', 'Score', 'Total Questions', 'Percentage', 'Passed', 'Time Taken (min)', 'Completed At'];
+    const rows = filteredResults.map(r => [
+      r.user_name || '',
+      r.user_email || '',
+      r.test_name || '',
+      r.score.toString(),
+      r.total_questions.toString(),
+      r.percentage.toString() + '%',
+      r.passed ? 'Yes' : 'No',
+      Math.floor(r.time_taken_seconds / 60).toString(),
+      new Date(r.completed_at).toLocaleString()
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `mock_test_results_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ title: 'Success', description: `Downloaded ${filteredResults.length} results` });
   };
 
   const fetchAptitudeQuestionCounts = async () => {
@@ -818,6 +929,10 @@ const Admin = () => {
             <TabsTrigger value="import-mock" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Plus className="h-3 w-3" />
               <span>Import Mock</span>
+            </TabsTrigger>
+            <TabsTrigger value="test-results" className="flex items-center gap-2 whitespace-nowrap" onClick={fetchMockTestResults}>
+              <Trophy className="h-4 w-4" />
+              <span className="hidden sm:inline">Test Results</span>
             </TabsTrigger>
           </TabsList>
 
@@ -2184,6 +2299,147 @@ const Admin = () => {
           {/* Mock Test CSV Import Tab */}
           <TabsContent value="import-mock">
             <MockTestCSVImport onRefresh={fetchMockTests} />
+          </TabsContent>
+
+          {/* Mock Test Results Tab */}
+          <TabsContent value="test-results">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Mock Test Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Controls */}
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-end">
+                  <div className="flex-1">
+                    <Label>Search by Name, Email, or Test</Label>
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search results..."
+                        value={resultsSearchQuery}
+                        onChange={(e) => setResultsSearchQuery(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={fetchMockTestResults} 
+                      disabled={loadingResults}
+                      variant="outline"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      {loadingResults ? 'Loading...' : 'Refresh'}
+                    </Button>
+                    <Button onClick={downloadResultsCSV} disabled={mockTestResults.length === 0}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download CSV
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Results Table */}
+                {mockTestResults.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 font-semibold text-foreground">User</th>
+                          <th className="text-left py-3 px-4 font-semibold text-foreground">Test</th>
+                          <th className="text-center py-3 px-4 font-semibold text-foreground">Score</th>
+                          <th className="text-center py-3 px-4 font-semibold text-foreground">Percentage</th>
+                          <th className="text-center py-3 px-4 font-semibold text-foreground">Status</th>
+                          <th className="text-center py-3 px-4 font-semibold text-foreground">Time</th>
+                          <th className="text-left py-3 px-4 font-semibold text-foreground">Completed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {mockTestResults
+                          .filter(r =>
+                            r.user_email?.toLowerCase().includes(resultsSearchQuery.toLowerCase()) ||
+                            r.user_name?.toLowerCase().includes(resultsSearchQuery.toLowerCase()) ||
+                            r.test_name?.toLowerCase().includes(resultsSearchQuery.toLowerCase())
+                          )
+                          .map((result) => (
+                            <tr key={result.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                              <td className="py-4 px-4">
+                                <div>
+                                  <p className="font-medium text-foreground">{result.user_name}</p>
+                                  <p className="text-xs text-muted-foreground">{result.user_email}</p>
+                                </div>
+                              </td>
+                              <td className="py-4 px-4">
+                                <p className="font-medium text-foreground">{result.test_name}</p>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <span className="font-semibold text-foreground">{result.score}/{result.total_questions}</span>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <span className={`font-semibold ${
+                                  result.percentage >= 80 ? 'text-success' :
+                                  result.percentage >= 50 ? 'text-warning' :
+                                  'text-destructive'
+                                }`}>
+                                  {result.percentage}%
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                  result.passed 
+                                    ? 'bg-success/10 text-success' 
+                                    : 'bg-destructive/10 text-destructive'
+                                }`}>
+                                  {result.passed ? 'Passed' : 'Failed'}
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-center">
+                                <span className="text-muted-foreground">
+                                  {Math.floor(result.time_taken_seconds / 60)}m {result.time_taken_seconds % 60}s
+                                </span>
+                              </td>
+                              <td className="py-4 px-4">
+                                <span className="text-muted-foreground text-xs">
+                                  {new Date(result.completed_at).toLocaleDateString()} {new Date(result.completed_at).toLocaleTimeString()}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {mockTestResults.length === 0 && !loadingResults && (
+                  <div className="text-center py-12">
+                    <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                    <p className="text-muted-foreground">Click "Refresh" to load mock test results</p>
+                  </div>
+                )}
+
+                {/* Loading State */}
+                {loadingResults && (
+                  <div className="text-center py-12">
+                    <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading results...</p>
+                  </div>
+                )}
+
+                {/* No Search Results */}
+                {mockTestResults.length > 0 && 
+                 mockTestResults.filter(r =>
+                   r.user_email?.toLowerCase().includes(resultsSearchQuery.toLowerCase()) ||
+                   r.user_name?.toLowerCase().includes(resultsSearchQuery.toLowerCase()) ||
+                   r.test_name?.toLowerCase().includes(resultsSearchQuery.toLowerCase())
+                 ).length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">No results found matching your search</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
