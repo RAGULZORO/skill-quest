@@ -233,10 +233,10 @@ const MockTest = () => {
     
     setSubmitting(true);
     try {
-      // Save progress to database with mock_test_id prefix for tracking
+      // Save progress to database
       const progressEntries = Object.values(answers).map((answer) => ({
         user_id: user?.id,
-        question_id: `${testId}_${answer.questionId}`,
+        question_id: answer.questionId,
         question_type: 'mock_test',
         is_correct: answer.isCorrect,
         time_spent_seconds: Math.floor((testConfig.time_minutes * 60 - timeLeft) / questions.length),
