@@ -57,11 +57,18 @@ export const useLevelProgress = (
 
         // Level 1 is always unlocked
         // Other levels require 80%+ accuracy on previous level
+        // If previous level has no questions, it counts as passed
         let isUnlocked = level === 1;
         
         if (level > 1 && levelProgress[level - 1]) {
           const prevLevel = levelProgress[level - 1];
-          isUnlocked = prevLevel.answeredQuestions > 0 && prevLevel.accuracy >= 80;
+          // If previous level has no questions, consider it passed
+          // Otherwise require 80%+ accuracy with at least one question answered
+          if (prevLevel.totalQuestions === 0) {
+            isUnlocked = prevLevel.isUnlocked; // Inherit from chain
+          } else {
+            isUnlocked = prevLevel.answeredQuestions > 0 && prevLevel.accuracy >= 80;
+          }
         }
 
         levelProgress[level] = {
