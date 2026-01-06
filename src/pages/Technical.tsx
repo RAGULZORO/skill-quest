@@ -387,10 +387,10 @@ const Technical = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className="group bg-card rounded-2xl shadow-card border border-border p-6 text-center hover:border-secondary/50 hover:shadow-lg transition-all"
+                  className="group bg-card rounded-2xl shadow-card border border-border p-6 text-center hover:border-primary/50 hover:shadow-lg transition-all"
                 >
-                  <div className="w-14 h-14 mx-auto rounded-xl bg-secondary/10 flex items-center justify-center mb-4 group-hover:bg-secondary/20 transition-colors">
-                    <cat.icon className="w-7 h-7 text-secondary" />
+                  <div className="w-14 h-14 mx-auto rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <cat.icon className="w-7 h-7 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground">{cat.name}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -431,7 +431,7 @@ const Technical = () => {
                     disabled={!levelData.isUnlocked}
                     className={`group bg-card rounded-2xl shadow-card border border-border p-6 text-center transition-all relative overflow-hidden ${
                       levelData.isUnlocked 
-                        ? 'hover:border-secondary/50 hover:shadow-lg cursor-pointer' 
+                        ? 'hover:border-primary/50 hover:shadow-lg cursor-pointer' 
                         : 'opacity-60 cursor-not-allowed'
                     }`}
                   >
@@ -444,10 +444,10 @@ const Technical = () => {
                       </div>
                     )}
                     
-                    <div className={`w-14 h-14 mx-auto rounded-xl bg-secondary/10 flex items-center justify-center mb-4 ${
-                      levelData.isUnlocked ? 'group-hover:bg-secondary/20' : ''
+                    <div className={`w-14 h-14 mx-auto rounded-xl bg-primary/10 flex items-center justify-center mb-4 ${
+                      levelData.isUnlocked ? 'group-hover:bg-primary/20' : ''
                     } transition-colors`}>
-                      <Icon className="w-7 h-7 text-secondary" />
+                      <Icon className="w-7 h-7 text-primary" />
                     </div>
                     
                     <h3 className="font-semibold text-foreground">{config.name}</h3>
@@ -460,7 +460,7 @@ const Technical = () => {
                       <div className="mt-3">
                         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-secondary transition-all"
+                            className="h-full bg-primary transition-all"
                             style={{ width: `${Math.round((levelData.answeredQuestions / levelData.totalQuestions) * 100)}%` }}
                           />
                         </div>
@@ -746,7 +746,7 @@ const Technical = () => {
 
         {/* CTA */}
         <div className="max-w-4xl mx-auto mt-12">
-          <div className="bg-gradient-secondary rounded-2xl p-6 text-center">
+          <div className="bg-primary rounded-2xl p-6 text-center">
             <h3 className="text-xl font-bold text-primary-foreground mb-2">
               Practice Makes Perfect
             </h3>
@@ -755,7 +755,7 @@ const Technical = () => {
             </p>
             <Button 
               onClick={() => navigate('/group-discussion')}
-              className="bg-primary-foreground text-secondary hover:bg-primary-foreground/90"
+              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
             >
               Try Group Discussion
               <ChevronRight className="ml-2 w-5 h-5" />
