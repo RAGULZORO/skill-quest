@@ -250,6 +250,11 @@ const Technical = () => {
       
       if (data.isCorrect) {
         toast({ title: "Correct!", description: `Score: ${data.score}/100` });
+        // Track progress only when code validation is successful
+        const timeSpent = expandStartTime.current 
+          ? Math.floor((Date.now() - expandStartTime.current) / 1000) 
+          : 0;
+        trackProgress(question.id, timeSpent);
       } else {
         toast({ title: "Not quite right", description: data.feedback?.substring(0, 100), variant: "destructive" });
       }
@@ -297,10 +302,7 @@ const Technical = () => {
 
   const handleExpand = (questionId: string) => {
     if (expandedId === questionId) {
-      if (expandStartTime.current && user) {
-        const timeSpent = Math.floor((Date.now() - expandStartTime.current) / 1000);
-        trackProgress(questionId, timeSpent);
-      }
+      // Only reset timer on collapse, don't track progress here
       expandStartTime.current = null;
       setExpandedId(null);
     } else {
