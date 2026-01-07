@@ -70,7 +70,6 @@ const Admin = () => {
   const [technicalForm, setTechnicalForm] = useState({
     title: '',
     difficulty: 'Medium',
-    category: 'Arrays',
     description: '',
     examples: [{ input: '', output: '', explanation: '' }],
     solution: '',
@@ -522,7 +521,7 @@ const Admin = () => {
     const { error } = await supabase.from('technical_questions').insert({
       title: technicalForm.title,
       difficulty: technicalForm.difficulty,
-      category: technicalForm.category,
+      category: 'General',
       description: technicalForm.description,
       examples: technicalForm.examples.filter(e => e.input || e.output),
       solution: technicalForm.solution,
@@ -536,7 +535,7 @@ const Admin = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Success', description: 'Technical question added!' });
-      setTechnicalForm({ title: '', difficulty: 'Medium', category: 'Arrays', description: '', examples: [{ input: '', output: '', explanation: '' }], solution: '', approach: '', level: 1 });
+      setTechnicalForm({ title: '', difficulty: 'Medium', description: '', examples: [{ input: '', output: '', explanation: '' }], solution: '', approach: '', level: 1 });
       await fetchTechnicalQuestionCounts();
     }
   };
@@ -636,7 +635,6 @@ const Admin = () => {
       .update({
         title: editTechnicalForm.title,
         difficulty: editTechnicalForm.difficulty,
-        category: editTechnicalForm.category,
         description: editTechnicalForm.description,
         examples: editTechnicalForm.examples.filter((e: any) => e.input || e.output),
         solution: editTechnicalForm.solution,
@@ -1161,7 +1159,7 @@ const Admin = () => {
               )}
 
               <CardContent className="space-y-4 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label>Title</Label>
                     <Input
@@ -1180,23 +1178,6 @@ const Admin = () => {
                         <SelectItem value="Easy">Easy</SelectItem>
                         <SelectItem value="Medium">Medium</SelectItem>
                         <SelectItem value="Hard">Hard</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Category</Label>
-                    <Select value={technicalForm.category} onValueChange={(v) => setTechnicalForm(prev => ({ ...prev, category: v }))}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Arrays">Arrays</SelectItem>
-                        <SelectItem value="Strings">Strings</SelectItem>
-                        <SelectItem value="Linked Lists">Linked Lists</SelectItem>
-                        <SelectItem value="Trees">Trees</SelectItem>
-                        <SelectItem value="Dynamic Programming">Dynamic Programming</SelectItem>
-                        <SelectItem value="Graphs">Graphs</SelectItem>
-                        <SelectItem value="Stack">Stack</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1642,21 +1623,7 @@ const Admin = () => {
                             <Label>Title</Label>
                             <Input value={editTechnicalForm?.title} onChange={(e) => setEditTechnicalForm(prev => ({ ...prev, title: e.target.value }))} />
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div>
-                              <Label>Category</Label>
-                              <Select value={editTechnicalForm?.category} onValueChange={(v) => setEditTechnicalForm(prev => ({ ...prev, category: v }))}>
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Arrays">Arrays</SelectItem>
-                                  <SelectItem value="Strings">Strings</SelectItem>
-                                  <SelectItem value="Linked Lists">Linked Lists</SelectItem>
-                                  <SelectItem value="Dynamic Programming">Dynamic Programming</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
                               <Label>Difficulty</Label>
                               <Select value={editTechnicalForm?.difficulty} onValueChange={(v) => setEditTechnicalForm(prev => ({ ...prev, difficulty: v }))}>
@@ -1708,9 +1675,8 @@ const Admin = () => {
                             <div className="flex-1">
                               <p className="font-medium text-sm">{q.title}</p>
                               <div className="flex gap-2 mt-1">
-                                <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">{q.category}</span>
                                 <span className={`text-xs px-2 py-1 rounded ${q.difficulty === 'Easy' ? 'bg-success/10 text-success' : q.difficulty === 'Medium' ? 'bg-warning/10 text-warning' : 'bg-destructive/10 text-destructive'}`}>{q.difficulty}</span>
-                                <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">Level {q.level}</span>
+                                <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Level {q.level}</span>
                               </div>
                             </div>
                             <div className="flex gap-2">

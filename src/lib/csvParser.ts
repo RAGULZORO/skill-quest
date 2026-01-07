@@ -138,9 +138,6 @@ const validateTechnicalQuestion = (data: Record<string, any>, rowNumber: number)
   if (!data.title || data.title.toString().trim() === '') {
     errors.push(`Row ${rowNumber}: Missing "title" field`);
   }
-  if (!data.category || data.category.toString().trim() === '') {
-    errors.push(`Row ${rowNumber}: Missing "category" field`);
-  }
   if (!data.difficulty || data.difficulty.toString().trim() === '') {
     errors.push(`Row ${rowNumber}: Missing "difficulty" field`);
   }
@@ -167,12 +164,6 @@ const validateTechnicalQuestion = (data: Record<string, any>, rowNumber: number)
   const validDifficulties = ['Easy', 'Medium', 'Hard'];
   if (data.difficulty && !validDifficulties.includes(data.difficulty.toString().trim())) {
     errors.push(`Row ${rowNumber}: Invalid difficulty. Must be one of: ${validDifficulties.join(', ')}`);
-  }
-
-  // Validate category
-  const validCategories = ['Arrays', 'Strings', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming', 'Sorting', 'Searching'];
-  if (data.category && !validCategories.includes(data.category.toString().trim())) {
-    errors.push(`Row ${rowNumber}: Invalid category. Suggested: ${validCategories.slice(0, 3).join(', ')}...`);
   }
 
   return errors;
@@ -355,7 +346,7 @@ export const formatForDatabase = (parsedQuestions: ParsedQuestion[], userId: str
         return {
           title: data.title.toString().trim(),
           difficulty: data.difficulty.toString().trim(),
-          category: data.category.toString().trim(),
+          category: 'General',
           description: data.description.toString().trim(),
           examples: examples,
           solution: data.solution.toString().trim(),
