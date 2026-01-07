@@ -21,10 +21,6 @@ import {
   ChevronDown,
   Copy,
   Check,
-  Terminal,
-  Database,
-  Globe,
-  Cpu,
   Loader2,
   Lock,
   Star,
@@ -77,12 +73,7 @@ interface CodingQuestion {
   level: number;
 }
 
-const categories = [
-  { id: 'Arrays', name: 'Arrays', icon: Database },
-  { id: 'Linked Lists', name: 'Linked List', icon: Globe },
-  { id: 'Stack', name: 'Stack', icon: Terminal },
-  { id: 'Dynamic Programming', name: 'DP', icon: Cpu },
-];
+// Categories removed - now showing only 4 levels directly
 
 const levelConfig = [
   { name: 'Level 1', icon: Star, subtitle: 'Beginner' },
@@ -97,7 +88,6 @@ const Technical = () => {
   const { toast } = useToast();
   const [questions, setQuestions] = useState<CodingQuestion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -110,28 +100,23 @@ const Technical = () => {
   const [saving, setSaving] = useState<Record<string, boolean>>({});
   const expandStartTime = useRef<number | null>(null);
 
-  const categoryQuestions = selectedCategory 
-    ? questions.filter(q => q.category === selectedCategory)
-    : [];
-  
-  // Apply deterministic shuffle based on user ID, category, and level
-  // This ensures each user gets different questions but in a consistent order
-  const levelQuestions = selectedCategory && selectedLevel
-    ? categoryQuestions.filter(q => q.level === selectedLevel)
+  // All questions grouped by level (no category filter)
+  const levelQuestions = selectedLevel
+    ? questions.filter(q => q.level === selectedLevel)
     : [];
 
-  const shuffledCategoryQuestions = selectedCategory && selectedLevel && levelQuestions.length > 0
+  const shuffledLevelQuestions = selectedLevel && levelQuestions.length > 0
     ? seededShuffle(
         levelQuestions,
-        createQuestionSeed(user?.id, selectedCategory, selectedLevel)
+        createQuestionSeed(user?.id, 'all', selectedLevel)
       )
     : levelQuestions;
   
   const { progress, loading: progressLoading } = useLevelProgress(
     user?.id,
     'technical',
-    selectedCategory,
-    categoryQuestions
+    'all', // Use 'all' as category to track progress across all questions
+    questions
   );
 
   useEffect(() => {
@@ -311,17 +296,8 @@ const Technical = () => {
     }
   };
 
-  const filteredQuestions = selectedCategory && selectedLevel
-    ? questions.filter(q => q.category === selectedCategory && q.level === selectedLevel)
-    : [];
-
-  // Apply deterministic shuffle to ensure each user gets different question order
-  const displayQuestions = selectedCategory && selectedLevel && filteredQuestions.length > 0
-    ? seededShuffle(
-        filteredQuestions,
-        createQuestionSeed(user?.id, selectedCategory, selectedLevel)
-      )
-    : filteredQuestions;
+  // Display questions based on selected level
+  const displayQuestions = shuffledLevelQuestions;
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -371,44 +347,9 @@ const Technical = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {!selectedCategory ? (
-          /* Category Cards */
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
-                Select a Category
-              </h1>
-              <p className="text-muted-foreground">
-                Choose a category to start practicing coding problems.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className="group bg-card rounded-2xl shadow-card border border-border p-6 text-center hover:border-primary/50 hover:shadow-lg transition-all"
-                >
-                  <div className="w-14 h-14 mx-auto rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <cat.icon className="w-7 h-7 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-foreground">{cat.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {questions.filter(q => q.category === cat.id).length} problems
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : !selectedLevel ? (
+        {!selectedLevel ? (
           /* Level Cards */
           <div className="max-w-4xl mx-auto">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className="text-sm text-secondary hover:underline mb-6"
-            >
-              ← Back to Categories
-            </button>
             <div className="text-center mb-8">
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
                 Select a Level
@@ -422,7 +363,7 @@ const Technical = () => {
                 const level = index + 1;
                 const levelData = progress[level] || { totalQuestions: 0, answeredQuestions: 0, accuracy: 0, isUnlocked: level === 1 };
                 const Icon = config.icon;
-                const levelQuestions = categoryQuestions.filter(q => q.level === level);
+                const questionsForLevel = questions.filter(q => q.level === level);
 
                 return (
                   <button
@@ -453,7 +394,7 @@ const Technical = () => {
                     <h3 className="font-semibold text-foreground">{config.name}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">{config.subtitle}</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      {levelQuestions.length} problems
+                      {questionsForLevel.length} problems
                     </p>
                     
                     {levelData.isUnlocked && levelData.answeredQuestions > 0 && (
