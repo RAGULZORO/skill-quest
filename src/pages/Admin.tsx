@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Brain, Code, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search, ClipboardList, Clock, Edit, Power, Download, Trophy } from 'lucide-react';
+import { ArrowLeft, Brain, Code, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search, ClipboardList, Clock, Edit, Power, Download, Trophy, Square, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -107,6 +107,12 @@ const Admin = () => {
   const [editGdForm, setEditGdForm] = useState<any>(null);
   
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+
+  // Bulk selection state
+  const [selectedAptitudeIds, setSelectedAptitudeIds] = useState<Set<string>>(new Set());
+  const [selectedTechnicalIds, setSelectedTechnicalIds] = useState<Set<string>>(new Set());
+  const [selectedGdIds, setSelectedGdIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // User Progress state
   const [userProgressData, setUserProgressData] = useState<any[]>([]);
@@ -737,6 +743,131 @@ const Admin = () => {
         await fetchAllGdQuestions();
         await fetchGdQuestionCounts();
       }
+    }
+  };
+
+  // Bulk delete handlers
+  const handleBulkDeleteAptitude = async () => {
+    if (selectedAptitudeIds.size === 0) {
+      toast({ title: 'No Selection', description: 'Please select questions to delete', variant: 'destructive' });
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete ${selectedAptitudeIds.size} question(s)? This action cannot be undone.`)) return;
+    
+    setBulkDeleting(true);
+    const { error } = await supabase
+      .from('aptitude_questions')
+      .delete()
+      .in('id', Array.from(selectedAptitudeIds));
+
+    setBulkDeleting(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `${selectedAptitudeIds.size} question(s) deleted!` });
+      setSelectedAptitudeIds(new Set());
+      await fetchAllAptitudeQuestions();
+      await fetchAptitudeQuestionCounts();
+    }
+  };
+
+  const handleBulkDeleteTechnical = async () => {
+    if (selectedTechnicalIds.size === 0) {
+      toast({ title: 'No Selection', description: 'Please select questions to delete', variant: 'destructive' });
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete ${selectedTechnicalIds.size} question(s)? This action cannot be undone.`)) return;
+    
+    setBulkDeleting(true);
+    const { error } = await supabase
+      .from('technical_questions')
+      .delete()
+      .in('id', Array.from(selectedTechnicalIds));
+
+    setBulkDeleting(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `${selectedTechnicalIds.size} question(s) deleted!` });
+      setSelectedTechnicalIds(new Set());
+      await fetchAllTechnicalQuestions();
+      await fetchTechnicalQuestionCounts();
+    }
+  };
+
+  const handleBulkDeleteGd = async () => {
+    if (selectedGdIds.size === 0) {
+      toast({ title: 'No Selection', description: 'Please select topics to delete', variant: 'destructive' });
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete ${selectedGdIds.size} topic(s)? This action cannot be undone.`)) return;
+    
+    setBulkDeleting(true);
+    const { error } = await supabase
+      .from('gd_topics')
+      .delete()
+      .in('id', Array.from(selectedGdIds));
+
+    setBulkDeleting(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `${selectedGdIds.size} topic(s) deleted!` });
+      setSelectedGdIds(new Set());
+      await fetchAllGdQuestions();
+      await fetchGdQuestionCounts();
+    }
+  };
+
+  // Toggle selection helpers
+  const toggleAptitudeSelection = (id: string) => {
+    setSelectedAptitudeIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleTechnicalSelection = (id: string) => {
+    setSelectedTechnicalIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleGdSelection = (id: string) => {
+    setSelectedGdIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAllAptitude = () => {
+    if (selectedAptitudeIds.size === allAptitudeQuestions.length) {
+      setSelectedAptitudeIds(new Set());
+    } else {
+      setSelectedAptitudeIds(new Set(allAptitudeQuestions.map(q => q.id)));
+    }
+  };
+
+  const toggleAllTechnical = () => {
+    if (selectedTechnicalIds.size === allTechnicalQuestions.length) {
+      setSelectedTechnicalIds(new Set());
+    } else {
+      setSelectedTechnicalIds(new Set(allTechnicalQuestions.map(q => q.id)));
+    }
+  };
+
+  const toggleAllGd = () => {
+    if (selectedGdIds.size === allGdQuestions.length) {
+      setSelectedGdIds(new Set());
+    } else {
+      setSelectedGdIds(new Set(allGdQuestions.map(q => q.id)));
     }
   };
 
@@ -1506,13 +1637,41 @@ const Admin = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button onClick={fetchAllAptitudeQuestions} variant="outline" className="mb-4">
-                  {loadingQuestions ? 'Loading...' : 'Load All Questions'}
-                </Button>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button onClick={fetchAllAptitudeQuestions} variant="outline">
+                    {loadingQuestions ? 'Loading...' : 'Load All Questions'}
+                  </Button>
+                  {allAptitudeQuestions.length > 0 && (
+                    <>
+                      <Button 
+                        onClick={toggleAllAptitude} 
+                        variant="outline"
+                        size="sm"
+                      >
+                        {selectedAptitudeIds.size === allAptitudeQuestions.length ? (
+                          <><CheckSquare className="h-4 w-4 mr-1" /> Deselect All</>
+                        ) : (
+                          <><Square className="h-4 w-4 mr-1" /> Select All</>
+                        )}
+                      </Button>
+                      {selectedAptitudeIds.size > 0 && (
+                        <Button 
+                          onClick={handleBulkDeleteAptitude} 
+                          variant="destructive"
+                          size="sm"
+                          disabled={bulkDeleting}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedAptitudeIds.size})`}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {allAptitudeQuestions.map((q: any) => (
-                    <div key={q.id} className="p-4 border border-border rounded-lg bg-card">
+                    <div key={q.id} className={`p-4 border rounded-lg bg-card ${selectedAptitudeIds.has(q.id) ? 'border-primary' : 'border-border'}`}>
                       {editingAptitudeId === q.id ? (
                         <div className="space-y-3">
                           <div>
@@ -1574,8 +1733,18 @@ const Admin = () => {
                           </div>
                         </div>
                       ) : (
-                        <div>
-                          <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => toggleAptitudeSelection(q.id)}
+                            className="mt-1 flex-shrink-0"
+                          >
+                            {selectedAptitudeIds.has(q.id) ? (
+                              <CheckSquare className="h-5 w-5 text-primary" />
+                            ) : (
+                              <Square className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </button>
+                          <div className="flex justify-between items-start flex-1">
                             <div className="flex-1">
                               <p className="font-medium text-sm">{q.question?.substring(0, 60)}...</p>
                               <div className="flex gap-2 mt-1">
@@ -1610,13 +1779,41 @@ const Admin = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button onClick={fetchAllTechnicalQuestions} variant="outline" className="mb-4">
-                  {loadingQuestions ? 'Loading...' : 'Load All Questions'}
-                </Button>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button onClick={fetchAllTechnicalQuestions} variant="outline">
+                    {loadingQuestions ? 'Loading...' : 'Load All Questions'}
+                  </Button>
+                  {allTechnicalQuestions.length > 0 && (
+                    <>
+                      <Button 
+                        onClick={toggleAllTechnical} 
+                        variant="outline"
+                        size="sm"
+                      >
+                        {selectedTechnicalIds.size === allTechnicalQuestions.length ? (
+                          <><CheckSquare className="h-4 w-4 mr-1" /> Deselect All</>
+                        ) : (
+                          <><Square className="h-4 w-4 mr-1" /> Select All</>
+                        )}
+                      </Button>
+                      {selectedTechnicalIds.size > 0 && (
+                        <Button 
+                          onClick={handleBulkDeleteTechnical} 
+                          variant="destructive"
+                          size="sm"
+                          disabled={bulkDeleting}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedTechnicalIds.size})`}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {allTechnicalQuestions.map((q: any) => (
-                    <div key={q.id} className="p-4 border border-border rounded-lg bg-card">
+                    <div key={q.id} className={`p-4 border rounded-lg bg-card ${selectedTechnicalIds.has(q.id) ? 'border-primary' : 'border-border'}`}>
                       {editingTechnicalId === q.id ? (
                         <div className="space-y-3">
                           <div>
@@ -1670,8 +1867,18 @@ const Admin = () => {
                           </div>
                         </div>
                       ) : (
-                        <div>
-                          <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => toggleTechnicalSelection(q.id)}
+                            className="mt-1 flex-shrink-0"
+                          >
+                            {selectedTechnicalIds.has(q.id) ? (
+                              <CheckSquare className="h-5 w-5 text-primary" />
+                            ) : (
+                              <Square className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </button>
+                          <div className="flex justify-between items-start flex-1">
                             <div className="flex-1">
                               <p className="font-medium text-sm">{q.title}</p>
                               <div className="flex gap-2 mt-1">
@@ -1706,13 +1913,41 @@ const Admin = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Button onClick={fetchAllGdQuestions} variant="outline" className="mb-4">
-                  {loadingQuestions ? 'Loading...' : 'Load All Topics'}
-                </Button>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button onClick={fetchAllGdQuestions} variant="outline">
+                    {loadingQuestions ? 'Loading...' : 'Load All Topics'}
+                  </Button>
+                  {allGdQuestions.length > 0 && (
+                    <>
+                      <Button 
+                        onClick={toggleAllGd} 
+                        variant="outline"
+                        size="sm"
+                      >
+                        {selectedGdIds.size === allGdQuestions.length ? (
+                          <><CheckSquare className="h-4 w-4 mr-1" /> Deselect All</>
+                        ) : (
+                          <><Square className="h-4 w-4 mr-1" /> Select All</>
+                        )}
+                      </Button>
+                      {selectedGdIds.size > 0 && (
+                        <Button 
+                          onClick={handleBulkDeleteGd} 
+                          variant="destructive"
+                          size="sm"
+                          disabled={bulkDeleting}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedGdIds.size})`}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
 
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {allGdQuestions.map((q: any) => (
-                    <div key={q.id} className="p-4 border border-border rounded-lg bg-card">
+                    <div key={q.id} className={`p-4 border rounded-lg bg-card ${selectedGdIds.has(q.id) ? 'border-primary' : 'border-border'}`}>
                       {editingGdId === q.id ? (
                         <div className="space-y-3">
                           <div>
@@ -1763,8 +1998,18 @@ const Admin = () => {
                           </div>
                         </div>
                       ) : (
-                        <div>
-                          <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => toggleGdSelection(q.id)}
+                            className="mt-1 flex-shrink-0"
+                          >
+                            {selectedGdIds.has(q.id) ? (
+                              <CheckSquare className="h-5 w-5 text-primary" />
+                            ) : (
+                              <Square className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </button>
+                          <div className="flex justify-between items-start flex-1">
                             <div className="flex-1">
                               <p className="font-medium text-sm">{q.title}</p>
                               <div className="flex gap-2 mt-1">
