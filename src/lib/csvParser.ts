@@ -129,41 +129,49 @@ const validateAptitudeQuestion = (data: Record<string, any>, rowNumber: number):
 };
 
 /**
- * Validate technical question
+ * Validate technical MCQ question (same structure as aptitude)
  */
 const validateTechnicalQuestion = (data: Record<string, any>, rowNumber: number): string[] => {
   const errors: string[] = [];
 
   // Required fields
-  if (!data.title || data.title.toString().trim() === '') {
-    errors.push(`Row ${rowNumber}: Missing "title" field`);
+  if (!data.question || data.question.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "question" field`);
   }
-  if (!data.difficulty || data.difficulty.toString().trim() === '') {
-    errors.push(`Row ${rowNumber}: Missing "difficulty" field`);
-  }
-  if (!data.description || data.description.toString().trim() === '') {
-    errors.push(`Row ${rowNumber}: Missing "description" field`);
-  }
-  if (!data.solution || data.solution.toString().trim() === '') {
-    errors.push(`Row ${rowNumber}: Missing "solution" field`);
-  }
-  if (!data.approach || data.approach.toString().trim() === '') {
-    errors.push(`Row ${rowNumber}: Missing "approach" field`);
+  if (!data.category || data.category.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "category" field`);
   }
   if (data.level === undefined || data.level === '') {
     errors.push(`Row ${rowNumber}: Missing "level" field`);
+  }
+
+  // Validate options (need 4)
+  const options = [data.option_a, data.option_b, data.option_c, data.option_d];
+  const filledOptions = options.filter(opt => opt && opt.toString().trim() !== '');
+
+  if (filledOptions.length < 4) {
+    errors.push(`Row ${rowNumber}: Must have 4 options (option_a, option_b, option_c, option_d)`);
+  }
+
+  // Validate correct answer
+  if (data.correct_answer === undefined || data.correct_answer === '') {
+    errors.push(`Row ${rowNumber}: Missing "correct_answer" field`);
+  } else {
+    const answerIndex = parseInt(data.correct_answer.toString());
+    if (isNaN(answerIndex) || answerIndex < 0 || answerIndex > 3) {
+      errors.push(`Row ${rowNumber}: "correct_answer" must be 0-3`);
+    }
+  }
+
+  // Validate explanation
+  if (!data.explanation || data.explanation.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "explanation" field`);
   }
 
   // Validate level
   const level = parseInt(data.level?.toString() || '');
   if (isNaN(level) || level < 1 || level > 4) {
     errors.push(`Row ${rowNumber}: "level" must be 1-4`);
-  }
-
-  // Validate difficulty
-  const validDifficulties = ['Easy', 'Medium', 'Hard'];
-  if (data.difficulty && !validDifficulties.includes(data.difficulty.toString().trim())) {
-    errors.push(`Row ${rowNumber}: Invalid difficulty. Must be one of: ${validDifficulties.join(', ')}`);
   }
 
   return errors;
@@ -333,24 +341,17 @@ export const formatForDatabase = (parsedQuestions: ParsedQuestion[], userId: str
           created_by: userId
         };
       } else if (pq.type === 'technical') {
-        // Parse examples if provided as JSON string
-        let examples = [];
-        if (data.examples && data.examples.toString().trim()) {
-          try {
-            examples = JSON.parse(data.examples.toString());
-          } catch {
-            examples = [];
-          }
-        }
-
         return {
-          title: data.title.toString().trim(),
-          difficulty: data.difficulty.toString().trim(),
-          category: 'General',
-          description: data.description.toString().trim(),
-          examples: examples,
-          solution: data.solution.toString().trim(),
-          approach: data.approach.toString().trim(),
+          question: data.question.toString().trim(),
+          options: [
+            data.option_a?.toString().trim() || '',
+            data.option_b?.toString().trim() || '',
+            data.option_c?.toString().trim() || '',
+            data.option_d?.toString().trim() || ''
+          ],
+          correct_answer: parseInt(data.correct_answer.toString()),
+          explanation: data.explanation.toString().trim(),
+          category: data.category.toString().trim(),
           level: parseInt(data.level.toString()),
           created_by: userId
         };

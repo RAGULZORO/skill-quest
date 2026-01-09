@@ -223,6 +223,42 @@ export type Database = {
         }
         Relationships: []
       }
+      technical_mcq_questions: {
+        Row: {
+          category: string
+          correct_answer: number
+          created_at: string
+          created_by: string | null
+          explanation: string
+          id: string
+          level: number
+          options: Json
+          question: string
+        }
+        Insert: {
+          category?: string
+          correct_answer: number
+          created_at?: string
+          created_by?: string | null
+          explanation: string
+          id?: string
+          level?: number
+          options: Json
+          question: string
+        }
+        Update: {
+          category?: string
+          correct_answer?: number
+          created_at?: string
+          created_by?: string | null
+          explanation?: string
+          id?: string
+          level?: number
+          options?: Json
+          question?: string
+        }
+        Relationships: []
+      }
       technical_questions: {
         Row: {
           approach: string

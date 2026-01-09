@@ -66,14 +66,13 @@ const Admin = () => {
     level: 1
   });
 
-  // Technical form state
+  // Technical MCQ form state (same structure as aptitude)
   const [technicalForm, setTechnicalForm] = useState({
-    title: '',
-    difficulty: 'Medium',
-    description: '',
-    examples: [{ input: '', output: '', explanation: '' }],
-    solution: '',
-    approach: '',
+    question: '',
+    options: ['', '', '', ''],
+    correctAnswer: 0,
+    explanation: '',
+    category: 'Programming',
     level: 1
   });
 
@@ -376,7 +375,7 @@ const Admin = () => {
       
       for (let level = 1; level <= 4; level++) {
         const { count, error } = await supabase
-          .from('technical_questions')
+          .from('technical_mcq_questions')
           .select('*', { count: 'exact', head: true })
           .eq('level', level);
 
@@ -436,7 +435,7 @@ const Admin = () => {
     setLoadingQuestions(true);
     try {
       const { data, error } = await supabase
-        .from('technical_questions')
+        .from('technical_mcq_questions')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -511,27 +510,29 @@ const Admin = () => {
   };
 
   const handleTechnicalSubmit = async () => {
-    if (!technicalForm.title || !technicalForm.description || !technicalForm.solution || !technicalForm.approach) {
-      toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
+    if (!technicalForm.question || technicalForm.options.some(o => !o) || !technicalForm.explanation) {
+      toast({ title: 'Error', description: 'Please fill all fields', variant: 'destructive' });
       return;
     }
 
     // Check if level already has 20 questions
     const currentCount = technicalQuestionCounts[technicalForm.level] || 0;
     if (currentCount >= 20) {
-      toast({ title: 'Error', description: `Level ${technicalForm.level} already has 20 questions. Please select a different level.`, variant: 'destructive' });
+      toast({ 
+        title: 'Limit Reached', 
+        description: `Level ${technicalForm.level} already has 20 questions. You cannot add more.`, 
+        variant: 'destructive' 
+      });
       return;
     }
 
     setSaving(true);
-    const { error } = await supabase.from('technical_questions').insert({
-      title: technicalForm.title,
-      difficulty: technicalForm.difficulty,
-      category: 'General',
-      description: technicalForm.description,
-      examples: technicalForm.examples.filter(e => e.input || e.output),
-      solution: technicalForm.solution,
-      approach: technicalForm.approach,
+    const { error } = await supabase.from('technical_mcq_questions').insert({
+      question: technicalForm.question,
+      options: technicalForm.options,
+      correct_answer: technicalForm.correctAnswer,
+      explanation: technicalForm.explanation,
+      category: technicalForm.category,
       level: technicalForm.level,
       created_by: user?.id
     });
@@ -540,8 +541,8 @@ const Admin = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Success', description: 'Technical question added!' });
-      setTechnicalForm({ title: '', difficulty: 'Medium', description: '', examples: [{ input: '', output: '', explanation: '' }], solution: '', approach: '', level: 1 });
+      toast({ title: 'Success', description: 'Technical MCQ added!' });
+      setTechnicalForm({ question: '', options: ['', '', '', ''], correctAnswer: 0, explanation: '', category: 'Programming', level: 1 });
       await fetchTechnicalQuestionCounts();
     }
   };
@@ -630,21 +631,20 @@ const Admin = () => {
   };
 
   const handleUpdateTechnical = async () => {
-    if (!editTechnicalForm.title || !editTechnicalForm.description || !editTechnicalForm.solution || !editTechnicalForm.approach) {
-      toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
+    if (!editTechnicalForm.question || editTechnicalForm.options.some((o: string) => !o) || !editTechnicalForm.explanation) {
+      toast({ title: 'Error', description: 'Please fill all fields', variant: 'destructive' });
       return;
     }
 
     setSaving(true);
     const { error } = await supabase
-      .from('technical_questions')
+      .from('technical_mcq_questions')
       .update({
-        title: editTechnicalForm.title,
-        difficulty: editTechnicalForm.difficulty,
-        description: editTechnicalForm.description,
-        examples: editTechnicalForm.examples.filter((e: any) => e.input || e.output),
-        solution: editTechnicalForm.solution,
-        approach: editTechnicalForm.approach,
+        question: editTechnicalForm.question,
+        options: editTechnicalForm.options,
+        correct_answer: editTechnicalForm.correct_answer,
+        explanation: editTechnicalForm.explanation,
+        category: editTechnicalForm.category,
         level: editTechnicalForm.level
       })
       .eq('id', editingTechnicalId);
@@ -653,7 +653,7 @@ const Admin = () => {
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Success', description: 'Technical question updated!' });
+      toast({ title: 'Success', description: 'Technical MCQ updated!' });
       setEditingTechnicalId(null);
       setEditTechnicalForm(null);
       await fetchAllTechnicalQuestions();
@@ -715,7 +715,7 @@ const Admin = () => {
   const handleDeleteTechnical = async (id: string) => {
     if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
       const { error } = await supabase
-        .from('technical_questions')
+        .from('technical_mcq_questions')
         .delete()
         .eq('id', id);
 
@@ -780,7 +780,7 @@ const Admin = () => {
     
     setBulkDeleting(true);
     const { error } = await supabase
-      .from('technical_questions')
+      .from('technical_mcq_questions')
       .delete()
       .in('id', Array.from(selectedTechnicalIds));
 
@@ -1235,7 +1235,7 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Code className="h-5 w-5 text-accent" />
-                  Add Technical Question
+                  Add Technical MCQ
                 </CardTitle>
               </CardHeader>
               
@@ -1290,25 +1290,22 @@ const Admin = () => {
               )}
 
               <CardContent className="space-y-4 pt-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Title</Label>
-                    <Input
-                      value={technicalForm.title}
-                      onChange={(e) => setTechnicalForm(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="e.g., Two Sum"
-                    />
-                  </div>
-                  <div>
-                    <Label>Difficulty</Label>
-                    <Select value={technicalForm.difficulty} onValueChange={(v) => setTechnicalForm(prev => ({ ...prev, difficulty: v }))}>
+                    <Label>Category</Label>
+                    <Select value={technicalForm.category} onValueChange={(v) => setTechnicalForm(prev => ({ ...prev, category: v }))}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Easy">Easy</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="Hard">Hard</SelectItem>
+                        <SelectItem value="Programming">Programming</SelectItem>
+                        <SelectItem value="Data Structures">Data Structures</SelectItem>
+                        <SelectItem value="Algorithms">Algorithms</SelectItem>
+                        <SelectItem value="Database">Database</SelectItem>
+                        <SelectItem value="Networking">Networking</SelectItem>
+                        <SelectItem value="Operating Systems">Operating Systems</SelectItem>
+                        <SelectItem value="Web Development">Web Development</SelectItem>
+                        <SelectItem value="OOPs">OOPs</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1329,97 +1326,69 @@ const Admin = () => {
                 </div>
 
                 <div>
-                  <Label>Description</Label>
+                  <Label>Question</Label>
                   <Textarea
-                    value={technicalForm.description}
-                    onChange={(e) => setTechnicalForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Describe the problem..."
-                    rows={4}
+                    value={technicalForm.question}
+                    onChange={(e) => setTechnicalForm(prev => ({ ...prev, question: e.target.value }))}
+                    placeholder="Enter the technical MCQ question..."
+                    rows={3}
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label>Examples</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTechnicalForm(prev => ({ ...prev, examples: [...prev.examples, { input: '', output: '', explanation: '' }] }))}
-                    >
-                      <Plus className="h-4 w-4 mr-1" /> Add Example
-                    </Button>
-                  </div>
-                  {technicalForm.examples.map((example, index) => (
-                    <div key={index} className="p-4 border border-border rounded-lg space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Example {index + 1}</span>
-                        {index > 0 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setTechnicalForm(prev => ({ ...prev, examples: prev.examples.filter((_, i) => i !== index) }))}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        )}
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {technicalForm.options.map((option, index) => (
+                    <div key={index}>
+                      <Label>Option {String.fromCharCode(65 + index)}</Label>
                       <Input
-                        value={example.input}
+                        value={option}
                         onChange={(e) => {
-                          const newExamples = [...technicalForm.examples];
-                          newExamples[index].input = e.target.value;
-                          setTechnicalForm(prev => ({ ...prev, examples: newExamples }));
+                          const newOptions = [...technicalForm.options];
+                          newOptions[index] = e.target.value;
+                          setTechnicalForm(prev => ({ ...prev, options: newOptions }));
                         }}
-                        placeholder="Input"
-                      />
-                      <Input
-                        value={example.output}
-                        onChange={(e) => {
-                          const newExamples = [...technicalForm.examples];
-                          newExamples[index].output = e.target.value;
-                          setTechnicalForm(prev => ({ ...prev, examples: newExamples }));
-                        }}
-                        placeholder="Output"
-                      />
-                      <Input
-                        value={example.explanation}
-                        onChange={(e) => {
-                          const newExamples = [...technicalForm.examples];
-                          newExamples[index].explanation = e.target.value;
-                          setTechnicalForm(prev => ({ ...prev, examples: newExamples }));
-                        }}
-                        placeholder="Explanation (optional)"
+                        placeholder={`Option ${String.fromCharCode(65 + index)}`}
                       />
                     </div>
                   ))}
                 </div>
 
                 <div>
-                  <Label>Solution Code</Label>
-                  <Textarea
-                    value={technicalForm.solution}
-                    onChange={(e) => setTechnicalForm(prev => ({ ...prev, solution: e.target.value }))}
-                    placeholder="Paste your solution code here..."
-                    rows={8}
-                    className="font-mono text-sm"
-                  />
+                  <Label>Correct Answer</Label>
+                  <Select value={technicalForm.correctAnswer.toString()} onValueChange={(v) => setTechnicalForm(prev => ({ ...prev, correctAnswer: parseInt(v) }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {technicalForm.options.map((_, index) => (
+                        <SelectItem key={index} value={index.toString()}>
+                          Option {String.fromCharCode(65 + index)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label>Approach Explanation</Label>
+                  <Label>Explanation</Label>
                   <Textarea
-                    value={technicalForm.approach}
-                    onChange={(e) => setTechnicalForm(prev => ({ ...prev, approach: e.target.value }))}
-                    placeholder="Explain the approach and time/space complexity..."
+                    value={technicalForm.explanation}
+                    onChange={(e) => setTechnicalForm(prev => ({ ...prev, explanation: e.target.value }))}
+                    placeholder="Explain why this is the correct answer..."
                     rows={4}
                   />
                 </div>
 
-                <Button onClick={handleTechnicalSubmit} disabled={saving} className="w-full">
+                <Button 
+                  onClick={handleTechnicalSubmit} 
+                  disabled={saving || (technicalQuestionCounts[technicalForm.level] || 0) >= 20}
+                  className="w-full"
+                >
                   <Save className="h-4 w-4 mr-2" />
-                  {saving ? 'Saving...' : 'Save Technical Question'}
+                  {(technicalQuestionCounts[technicalForm.level] || 0) >= 20 
+                    ? 'Level Full - Cannot Add More' 
+                    : saving 
+                    ? 'Saving...' 
+                    : 'Save Technical MCQ'}
                 </Button>
               </CardContent>
             </Card>
@@ -1775,7 +1744,7 @@ const Admin = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Code className="h-5 w-5 text-accent" />
-                  Edit/Delete Technical Questions
+                  Edit/Delete Technical MCQs
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1817,26 +1786,31 @@ const Admin = () => {
                       {editingTechnicalId === q.id ? (
                         <div className="space-y-3">
                           <div>
-                            <Label>Title</Label>
-                            <Input value={editTechnicalForm?.title} onChange={(e) => setEditTechnicalForm(prev => ({ ...prev, title: e.target.value }))} />
+                            <Label>Question</Label>
+                            <Textarea value={editTechnicalForm?.question} onChange={(e) => setEditTechnicalForm((prev: any) => ({ ...prev, question: e.target.value }))} />
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                              <Label>Difficulty</Label>
-                              <Select value={editTechnicalForm?.difficulty} onValueChange={(v) => setEditTechnicalForm(prev => ({ ...prev, difficulty: v }))}>
+                              <Label>Category</Label>
+                              <Select value={editTechnicalForm?.category} onValueChange={(v) => setEditTechnicalForm((prev: any) => ({ ...prev, category: v }))}>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="Easy">Easy</SelectItem>
-                                  <SelectItem value="Medium">Medium</SelectItem>
-                                  <SelectItem value="Hard">Hard</SelectItem>
+                                  <SelectItem value="Programming">Programming</SelectItem>
+                                  <SelectItem value="Data Structures">Data Structures</SelectItem>
+                                  <SelectItem value="Algorithms">Algorithms</SelectItem>
+                                  <SelectItem value="Database">Database</SelectItem>
+                                  <SelectItem value="Networking">Networking</SelectItem>
+                                  <SelectItem value="Operating Systems">Operating Systems</SelectItem>
+                                  <SelectItem value="Web Development">Web Development</SelectItem>
+                                  <SelectItem value="OOPs">OOPs</SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
                             <div>
                               <Label>Level</Label>
-                              <Select value={editTechnicalForm?.level?.toString()} onValueChange={(v) => setEditTechnicalForm(prev => ({ ...prev, level: parseInt(v) }))}>
+                              <Select value={editTechnicalForm?.level?.toString()} onValueChange={(v) => setEditTechnicalForm((prev: any) => ({ ...prev, level: parseInt(v) }))}>
                                 <SelectTrigger>
                                   <SelectValue />
                                 </SelectTrigger>
@@ -1849,17 +1823,22 @@ const Admin = () => {
                               </Select>
                             </div>
                           </div>
+                          {editTechnicalForm?.options?.map((opt: string, idx: number) => (
+                            <div key={idx}>
+                              <Label>Option {idx + 1}</Label>
+                              <Input value={opt} onChange={(e) => setEditTechnicalForm((prev: any) => ({
+                                ...prev,
+                                options: prev.options.map((o: string, i: number) => i === idx ? e.target.value : o)
+                              }))} />
+                            </div>
+                          ))}
                           <div>
-                            <Label>Description</Label>
-                            <Textarea value={editTechnicalForm?.description} onChange={(e) => setEditTechnicalForm(prev => ({ ...prev, description: e.target.value }))} rows={3} />
+                            <Label>Correct Answer (0-3)</Label>
+                            <Input type="number" min="0" max="3" value={editTechnicalForm?.correct_answer} onChange={(e) => setEditTechnicalForm((prev: any) => ({ ...prev, correct_answer: parseInt(e.target.value) }))} />
                           </div>
                           <div>
-                            <Label>Solution</Label>
-                            <Textarea value={editTechnicalForm?.solution} onChange={(e) => setEditTechnicalForm(prev => ({ ...prev, solution: e.target.value }))} rows={3} />
-                          </div>
-                          <div>
-                            <Label>Approach</Label>
-                            <Textarea value={editTechnicalForm?.approach} onChange={(e) => setEditTechnicalForm(prev => ({ ...prev, approach: e.target.value }))} rows={3} />
+                            <Label>Explanation</Label>
+                            <Textarea value={editTechnicalForm?.explanation} onChange={(e) => setEditTechnicalForm((prev: any) => ({ ...prev, explanation: e.target.value }))} />
                           </div>
                           <div className="flex gap-2">
                             <Button onClick={handleUpdateTechnical} disabled={saving} className="flex-1">Save Changes</Button>
@@ -1880,9 +1859,9 @@ const Admin = () => {
                           </button>
                           <div className="flex justify-between items-start flex-1">
                             <div className="flex-1">
-                              <p className="font-medium text-sm">{q.title}</p>
+                              <p className="font-medium text-sm">{q.question?.substring(0, 60)}...</p>
                               <div className="flex gap-2 mt-1">
-                                <span className={`text-xs px-2 py-1 rounded ${q.difficulty === 'Easy' ? 'bg-success/10 text-success' : q.difficulty === 'Medium' ? 'bg-warning/10 text-warning' : 'bg-destructive/10 text-destructive'}`}>{q.difficulty}</span>
+                                <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">{q.category}</span>
                                 <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Level {q.level}</span>
                               </div>
                             </div>
