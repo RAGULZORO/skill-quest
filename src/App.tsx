@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Aptitude from "./pages/Aptitude";
 import Technical from "./pages/Technical";
+import Coding from "./pages/Coding";
 import GroupDiscussion from "./pages/GroupDiscussion";
 import MockTests from "./pages/MockTests";
 import MockTest from "./pages/MockTest";
@@ -87,6 +88,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Technical />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/coding"
+        element={
+          <ProtectedRoute>
+            <Coding />
           </ProtectedRoute>
         }
       />

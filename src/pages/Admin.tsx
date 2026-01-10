@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Brain, Code, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search, ClipboardList, Clock, Edit, Power, Download, Trophy, Square, CheckSquare } from 'lucide-react';
+import { ArrowLeft, Brain, Code, Terminal, Users, Plus, Trash2, Save, AlertCircle, CheckCircle2, TrendingUp, BarChart3, Search, ClipboardList, Clock, Edit, Power, Download, Trophy, Square, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,16 +94,19 @@ const Admin = () => {
   const [allAptitudeQuestions, setAllAptitudeQuestions] = useState<any[]>([]);
   const [allTechnicalQuestions, setAllTechnicalQuestions] = useState<any[]>([]);
   const [allGdQuestions, setAllGdQuestions] = useState<any[]>([]);
+  const [allCodingQuestions, setAllCodingQuestions] = useState<any[]>([]);
   
   // Edit mode state
   const [editingAptitudeId, setEditingAptitudeId] = useState<string | null>(null);
   const [editingTechnicalId, setEditingTechnicalId] = useState<string | null>(null);
   const [editingGdId, setEditingGdId] = useState<string | null>(null);
+  const [editingCodingId, setEditingCodingId] = useState<string | null>(null);
   
   // Edit forms
   const [editAptitudeForm, setEditAptitudeForm] = useState<any>(null);
   const [editTechnicalForm, setEditTechnicalForm] = useState<any>(null);
   const [editGdForm, setEditGdForm] = useState<any>(null);
+  const [editCodingForm, setEditCodingForm] = useState<any>(null);
   
   const [loadingQuestions, setLoadingQuestions] = useState(false);
 
@@ -111,7 +114,25 @@ const Admin = () => {
   const [selectedAptitudeIds, setSelectedAptitudeIds] = useState<Set<string>>(new Set());
   const [selectedTechnicalIds, setSelectedTechnicalIds] = useState<Set<string>>(new Set());
   const [selectedGdIds, setSelectedGdIds] = useState<Set<string>>(new Set());
+  const [selectedCodingIds, setSelectedCodingIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  // Coding form state
+  const [codingForm, setCodingForm] = useState({
+    title: '',
+    description: '',
+    difficulty: 'Easy',
+    category: 'Programming',
+    level: 1,
+    examples: [{ input: '', output: '' }],
+    approach: '',
+    solution: ''
+  });
+
+  // Coding question counts
+  const [codingQuestionCounts, setCodingQuestionCounts] = useState<Record<number, number>>({
+    1: 0, 2: 0, 3: 0, 4: 0
+  });
 
   // User Progress state
   const [userProgressData, setUserProgressData] = useState<any[]>([]);
@@ -159,6 +180,7 @@ const Admin = () => {
     fetchAptitudeQuestionCounts();
     fetchTechnicalQuestionCounts();
     fetchGdQuestionCounts();
+    fetchCodingQuestionCounts();
   }, []);
 
   // Fetch user progress when tab is opened
@@ -467,6 +489,41 @@ const Admin = () => {
       console.error('Error fetching GD topics:', error);
     }
     setLoadingQuestions(false);
+  };
+
+  const fetchAllCodingQuestions = async () => {
+    setLoadingQuestions(true);
+    try {
+      const { data, error } = await supabase
+        .from('technical_questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching coding questions:', error);
+      } else {
+        setAllCodingQuestions(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching coding questions:', error);
+    }
+    setLoadingQuestions(false);
+  };
+
+  const fetchCodingQuestionCounts = async () => {
+    try {
+      const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      for (let level = 1; level <= 4; level++) {
+        const { count, error } = await supabase
+          .from('technical_questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('level', level);
+        if (!error && count !== null) counts[level] = count;
+      }
+      setCodingQuestionCounts(counts);
+    } catch (error) {
+      console.error('Error fetching coding counts:', error);
+    }
   };
 
   const handleAptitudeSubmit = async () => {
@@ -1023,6 +1080,10 @@ const Admin = () => {
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">GD Topics</span>
             </TabsTrigger>
+            <TabsTrigger value="coding" className="flex items-center gap-2 whitespace-nowrap">
+              <Terminal className="h-4 w-4" />
+              <span className="hidden sm:inline">Coding</span>
+            </TabsTrigger>
             <TabsTrigger value="manage-apt" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Trash2 className="h-3 w-3" />
               <span>Manage Apt</span>
@@ -1035,6 +1096,10 @@ const Admin = () => {
               <Trash2 className="h-3 w-3" />
               <span>Manage GD</span>
             </TabsTrigger>
+            <TabsTrigger value="manage-coding" className="flex items-center gap-1 text-xs whitespace-nowrap" onClick={fetchAllCodingQuestions}>
+              <Trash2 className="h-3 w-3" />
+              <span>Manage Coding</span>
+            </TabsTrigger>
             <TabsTrigger value="import-apt" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Plus className="h-3 w-3" />
               <span>Import Apt</span>
@@ -1046,6 +1111,10 @@ const Admin = () => {
             <TabsTrigger value="import-gd" className="flex items-center gap-1 text-xs whitespace-nowrap">
               <Plus className="h-3 w-3" />
               <span>Import GD</span>
+            </TabsTrigger>
+            <TabsTrigger value="import-coding" className="flex items-center gap-1 text-xs whitespace-nowrap">
+              <Plus className="h-3 w-3" />
+              <span>Import Coding</span>
             </TabsTrigger>
             <TabsTrigger value="progress" className="flex items-center gap-2 whitespace-nowrap">
               <BarChart3 className="h-4 w-4" />
