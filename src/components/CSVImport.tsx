@@ -45,10 +45,10 @@ Logical Reasoning,2,If A=1 B=2 C=3... Z=26 then M=?,10,11,12,13,2,M is the 13th 
 Verbal Ability,1,Select the correct spelling,Occassion,Occasion,Ocasion,Occassoin,1,Occasion is spelled with two c's and one s`;
 
       case 'technical':
-        return `title,category,difficulty,level,description,solution,approach
-Two Sum,Arrays,Easy,1,"Given an array of integers nums and an integer target, return indices of the two numbers.","return [i, j]","Use hash map to store values, O(n) time"
-Reverse String,Strings,Easy,1,"Write a function that reverses a string","s = s[::-1]","Can use two pointers or built-in reverse"
-Merge Sorted Arrays,Arrays,Medium,2,"Merge two sorted arrays without extra space","Use two pointers from end","Compare and place larger elements at the end"`;
+        return `category,level,question,option_a,option_b,option_c,option_d,correct_answer,explanation
+Data Structures,1,What is the time complexity of binary search?,O(n),O(log n),O(n^2),O(1),1,Binary search divides the search space in half each iteration
+Programming,2,Which keyword is used to define a class in Python?,function,def,class,struct,2,The class keyword is used to define classes in Python
+Databases,1,What does SQL stand for?,Structured Query Language,Simple Query Language,Standard Query Language,Sequential Query Language,0,SQL stands for Structured Query Language`;
 
       case 'gd':
         return `title,category,level,description,points_for,points_against,conclusion
@@ -182,7 +182,7 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
         
         try {
           const { error } = await supabase
-            .from(type === 'aptitude' ? 'aptitude_questions' : type === 'technical' ? 'technical_questions' : 'gd_topics')
+            .from(type === 'aptitude' ? 'aptitude_questions' : type === 'technical' ? 'technical_mcq_questions' : 'gd_topics')
             .insert(chunk);
 
           if (error) {
@@ -254,9 +254,8 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
   const getTechnicalFormatInfo = () => {
     if (type !== 'technical') return null;
     return {
-      columns: ['title', 'category', 'difficulty', 'level', 'description', 'solution', 'approach'],
-      categories: ['Arrays', 'Strings', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming', 'Sorting', 'Searching'],
-      difficulties: ['Easy', 'Medium', 'Hard'],
+      columns: ['category', 'level', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'explanation'],
+      categories: ['Data Structures', 'Algorithms', 'Programming', 'Databases', 'Networking', 'Operating Systems', 'Web Development', 'OOP'],
       levels: ['1', '2', '3', '4']
     };
   };
@@ -341,7 +340,7 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
                 </div>
               </div>
               
-              <div className="grid md:grid-cols-3 gap-4 pt-2 border-t border-border">
+              <div className="grid md:grid-cols-2 gap-4 pt-2 border-t border-border">
                 <div>
                   <p className="text-xs font-semibold text-foreground mb-1.5">Valid Categories:</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -351,16 +350,6 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
                       </span>
                     ))}
                     <span className="px-2 py-1 text-xs text-muted-foreground">+{formatInfo.categories.length - 4} more</span>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-foreground mb-1.5">Difficulty Levels:</p>
-                  <div className="flex gap-1.5">
-                    {formatInfo.difficulties.map(diff => (
-                      <span key={diff} className="px-2 py-1 bg-background border border-border rounded text-xs text-muted-foreground">
-                        {diff}
-                      </span>
-                    ))}
                   </div>
                 </div>
                 <div>
