@@ -199,9 +199,9 @@ const GroupDiscussion = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className="group bg-card rounded-2xl shadow-card border border-border p-6 text-center hover:border-accent/50 hover:shadow-lg transition-all"
+                  className="group bg-card rounded-2xl shadow-lg border-2 border-border p-6 text-center hover:border-accent hover:shadow-xl transition-all"
                 >
-                  <div className="w-14 h-14 mx-auto rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                  <div className="w-14 h-14 mx-auto rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4 group-hover:bg-accent/30 transition-colors">
                     <cat.icon className="w-7 h-7 text-accent" />
                   </div>
                   <h3 className="font-semibold text-foreground">{cat.name}</h3>
@@ -241,14 +241,14 @@ const GroupDiscussion = () => {
                     key={level}
                     onClick={() => levelData.isUnlocked && setSelectedLevel(level)}
                     disabled={!levelData.isUnlocked}
-                    className={`group bg-card rounded-2xl shadow-card border border-border p-6 text-center transition-all relative overflow-hidden ${
+                    className={`group bg-card rounded-2xl shadow-lg border-2 border-border p-6 text-center transition-all relative overflow-hidden ${
                       levelData.isUnlocked 
-                        ? 'hover:border-accent/50 hover:shadow-lg cursor-pointer' 
+                        ? 'hover:border-accent hover:shadow-xl cursor-pointer' 
                         : 'opacity-60 cursor-not-allowed'
                     }`}
                   >
                     {!levelData.isUnlocked && (
-                      <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
+                      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
                         <div className="flex flex-col items-center gap-2">
                           <Lock className="w-8 h-8 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">Need 80% in Level {level - 1}</span>
@@ -256,8 +256,8 @@ const GroupDiscussion = () => {
                       </div>
                     )}
                     
-                    <div className={`w-14 h-14 mx-auto rounded-xl bg-accent/10 flex items-center justify-center mb-4 ${
-                      levelData.isUnlocked ? 'group-hover:bg-accent/20' : ''
+                    <div className={`w-14 h-14 mx-auto rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4 ${
+                      levelData.isUnlocked ? 'group-hover:bg-accent/30' : ''
                     } transition-colors`}>
                       <Icon className="w-7 h-7 text-accent" />
                     </div>
