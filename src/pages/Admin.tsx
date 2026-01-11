@@ -928,6 +928,115 @@ const Admin = () => {
     }
   };
 
+  const toggleAllCoding = () => {
+    if (selectedCodingIds.size === allCodingQuestions.length) {
+      setSelectedCodingIds(new Set());
+    } else {
+      setSelectedCodingIds(new Set(allCodingQuestions.map(q => q.id)));
+    }
+  };
+
+  const toggleCodingSelection = (id: string) => {
+    setSelectedCodingIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleCodingSubmit = async () => {
+    if (!codingForm.title || !codingForm.description || !codingForm.approach || !codingForm.solution) {
+      toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+    const currentCount = codingQuestionCounts[codingForm.level] || 0;
+    if (currentCount >= 20) {
+      toast({ title: 'Limit Reached', description: `Level ${codingForm.level} already has 20 questions.`, variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from('technical_questions').insert({
+      title: codingForm.title,
+      description: codingForm.description,
+      difficulty: codingForm.difficulty,
+      category: codingForm.category,
+      level: codingForm.level,
+      examples: codingForm.examples.filter(e => e.input || e.output),
+      approach: codingForm.approach,
+      solution: codingForm.solution,
+      created_by: user?.id
+    });
+    setSaving(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Coding question added!' });
+      setCodingForm({ title: '', description: '', difficulty: 'Easy', category: 'Arrays', level: 1, examples: [{ input: '', output: '' }], approach: '', solution: '' });
+      await fetchCodingQuestionCounts();
+    }
+  };
+
+  const handleUpdateCoding = async () => {
+    if (!editCodingForm?.title || !editCodingForm?.description) {
+      toast({ title: 'Error', description: 'Please fill all required fields', variant: 'destructive' });
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from('technical_questions').update({
+      title: editCodingForm.title,
+      description: editCodingForm.description,
+      difficulty: editCodingForm.difficulty,
+      category: editCodingForm.category,
+      level: editCodingForm.level,
+      approach: editCodingForm.approach,
+      solution: editCodingForm.solution,
+      examples: editCodingForm.examples
+    }).eq('id', editingCodingId);
+    setSaving(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: 'Coding question updated!' });
+      setEditingCodingId(null);
+      setEditCodingForm(null);
+      await fetchAllCodingQuestions();
+      await fetchCodingQuestionCounts();
+    }
+  };
+
+  const handleDeleteCoding = async (id: string) => {
+    if (confirm('Are you sure you want to delete this question?')) {
+      const { error } = await supabase.from('technical_questions').delete().eq('id', id);
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      } else {
+        toast({ title: 'Success', description: 'Question deleted!' });
+        await fetchAllCodingQuestions();
+        await fetchCodingQuestionCounts();
+      }
+    }
+  };
+
+  const handleBulkDeleteCoding = async () => {
+    if (selectedCodingIds.size === 0) {
+      toast({ title: 'No Selection', description: 'Please select questions to delete', variant: 'destructive' });
+      return;
+    }
+    if (!confirm(`Delete ${selectedCodingIds.size} question(s)?`)) return;
+    setBulkDeleting(true);
+    const { error } = await supabase.from('technical_questions').delete().in('id', Array.from(selectedCodingIds));
+    setBulkDeleting(false);
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Success', description: `${selectedCodingIds.size} question(s) deleted!` });
+      setSelectedCodingIds(new Set());
+      await fetchAllCodingQuestions();
+      await fetchCodingQuestionCounts();
+    }
+  };
+
   // Mock Tests CRUD functions
   const fetchMockTests = async () => {
     setLoadingMockTests(true);
@@ -2103,6 +2212,400 @@ const Admin = () => {
             <CSVImport 
               type="gd"
               onCountsUpdated={fetchGdQuestionCounts}
+            />
+          </TabsContent>
+
+          {/* Coding Tab - Add New Coding Question */}
+          <TabsContent value="coding">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Terminal className="h-5 w-5 text-warning" />
+                  Add Coding Question
+                </CardTitle>
+              </CardHeader>
+              
+              {/* Question Count Status */}
+              <CardContent className="pb-0 pt-4 border-b border-border">
+                <div className="space-y-3 mb-6">
+                  <h3 className="text-sm font-semibold text-foreground">Coding Questions Added per Level (Max 20)</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    {[1, 2, 3, 4].map((level) => {
+                      const count = codingQuestionCounts[level] || 0;
+                      const isFull = count >= 20;
+                      const levelName = level === 1 ? 'Beginner' : level === 2 ? 'Intermediate' : level === 3 ? 'Advanced' : 'Expert';
+                      
+                      return (
+                        <div
+                          key={level}
+                          className={`p-4 rounded-lg border-2 flex items-center justify-between transition-all ${
+                            isFull
+                              ? 'border-success/50 bg-success/5'
+                              : count >= 15
+                              ? 'border-warning/50 bg-warning/5'
+                              : 'border-border bg-card'
+                          }`}
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Level {level}</p>
+                            <p className="text-xs text-muted-foreground">{levelName}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-1">
+                            <span className={`text-lg font-bold ${isFull ? 'text-success' : count >= 15 ? 'text-warning' : 'text-warning'}`}>
+                              {count}/20
+                            </span>
+                            {isFull && <CheckCircle2 className="w-4 h-4 text-success" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+
+              {/* Limit warning if current level is full */}
+              {(codingQuestionCounts[codingForm.level] || 0) >= 20 && (
+                <CardContent className="pt-4 pb-0 border-b border-border">
+                  <Alert className="border-destructive/50 bg-destructive/5">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <AlertDescription className="text-destructive ml-2">
+                      Level {codingForm.level} already has 20 questions. Please select a different level to continue adding questions.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              )}
+
+              <CardContent className="space-y-4 pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Category</Label>
+                    <Select value={codingForm.category} onValueChange={(v) => setCodingForm(prev => ({ ...prev, category: v }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Arrays">Arrays</SelectItem>
+                        <SelectItem value="Strings">Strings</SelectItem>
+                        <SelectItem value="Linked Lists">Linked Lists</SelectItem>
+                        <SelectItem value="Trees">Trees</SelectItem>
+                        <SelectItem value="Graphs">Graphs</SelectItem>
+                        <SelectItem value="Dynamic Programming">Dynamic Programming</SelectItem>
+                        <SelectItem value="Recursion">Recursion</SelectItem>
+                        <SelectItem value="Sorting">Sorting</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Difficulty</Label>
+                    <Select value={codingForm.difficulty} onValueChange={(v) => setCodingForm(prev => ({ ...prev, difficulty: v }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Easy">Easy</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Hard">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Level</Label>
+                    <Select value={codingForm.level.toString()} onValueChange={(v) => setCodingForm(prev => ({ ...prev, level: parseInt(v) }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Level 1 - Beginner</SelectItem>
+                        <SelectItem value="2">Level 2 - Intermediate</SelectItem>
+                        <SelectItem value="3">Level 3 - Advanced</SelectItem>
+                        <SelectItem value="4">Final Level - Expert</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Title</Label>
+                  <Input
+                    value={codingForm.title}
+                    onChange={(e) => setCodingForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="e.g., Two Sum, Reverse String"
+                  />
+                </div>
+
+                <div>
+                  <Label>Problem Description</Label>
+                  <Textarea
+                    value={codingForm.description}
+                    onChange={(e) => setCodingForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Describe the problem clearly. Include input/output format and constraints."
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <Label className="flex items-center justify-between">
+                    <span>Examples</span>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setCodingForm(prev => ({ 
+                        ...prev, 
+                        examples: [...prev.examples, { input: '', output: '' }] 
+                      }))}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Example
+                    </Button>
+                  </Label>
+                  <div className="space-y-3 mt-2">
+                    {codingForm.examples.map((example, idx) => (
+                      <div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 border border-border rounded-lg bg-muted/30">
+                        <div>
+                          <Label className="text-xs">Input</Label>
+                          <Input
+                            value={example.input}
+                            onChange={(e) => {
+                              const newExamples = [...codingForm.examples];
+                              newExamples[idx].input = e.target.value;
+                              setCodingForm(prev => ({ ...prev, examples: newExamples }));
+                            }}
+                            placeholder="e.g., nums = [2,7,11,15], target = 9"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Label className="text-xs">Output</Label>
+                            <Input
+                              value={example.output}
+                              onChange={(e) => {
+                                const newExamples = [...codingForm.examples];
+                                newExamples[idx].output = e.target.value;
+                                setCodingForm(prev => ({ ...prev, examples: newExamples }));
+                              }}
+                              placeholder="e.g., [0, 1]"
+                            />
+                          </div>
+                          {codingForm.examples.length > 1 && (
+                            <Button 
+                              type="button" 
+                              variant="ghost" 
+                              size="icon"
+                              className="mt-5"
+                              onClick={() => {
+                                const newExamples = codingForm.examples.filter((_, i) => i !== idx);
+                                setCodingForm(prev => ({ ...prev, examples: newExamples }));
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Approach / Hints</Label>
+                  <Textarea
+                    value={codingForm.approach}
+                    onChange={(e) => setCodingForm(prev => ({ ...prev, approach: e.target.value }))}
+                    placeholder="Explain the approach to solve this problem. Include time and space complexity."
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label>Solution Code</Label>
+                  <Textarea
+                    value={codingForm.solution}
+                    onChange={(e) => setCodingForm(prev => ({ ...prev, solution: e.target.value }))}
+                    placeholder="Write the solution code (JavaScript preferred)"
+                    rows={8}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <Button 
+                  onClick={handleCodingSubmit} 
+                  disabled={saving || (codingQuestionCounts[codingForm.level] || 0) >= 20}
+                  className="w-full"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {(codingQuestionCounts[codingForm.level] || 0) >= 20 
+                    ? 'Level Full - Cannot Add More' 
+                    : saving 
+                    ? 'Saving...' 
+                    : 'Save Coding Question'}
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Manage Coding Questions Tab */}
+          <TabsContent value="manage-coding">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Terminal className="h-5 w-5 text-warning" />
+                  Edit/Delete Coding Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <Button onClick={fetchAllCodingQuestions} variant="outline">
+                    {loadingQuestions ? 'Loading...' : 'Load All Questions'}
+                  </Button>
+                  {allCodingQuestions.length > 0 && (
+                    <>
+                      <Button 
+                        onClick={toggleAllCoding} 
+                        variant="outline"
+                        size="sm"
+                      >
+                        {selectedCodingIds.size === allCodingQuestions.length ? (
+                          <><CheckSquare className="h-4 w-4 mr-1" /> Deselect All</>
+                        ) : (
+                          <><Square className="h-4 w-4 mr-1" /> Select All</>
+                        )}
+                      </Button>
+                      {selectedCodingIds.size > 0 && (
+                        <Button 
+                          onClick={handleBulkDeleteCoding} 
+                          variant="destructive"
+                          size="sm"
+                          disabled={bulkDeleting}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {bulkDeleting ? 'Deleting...' : `Delete Selected (${selectedCodingIds.size})`}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {allCodingQuestions.map((q: any) => (
+                    <div key={q.id} className={`p-4 border rounded-lg bg-card ${selectedCodingIds.has(q.id) ? 'border-primary' : 'border-border'}`}>
+                      {editingCodingId === q.id ? (
+                        <div className="space-y-3">
+                          <div>
+                            <Label>Title</Label>
+                            <Input value={editCodingForm?.title} onChange={(e) => setEditCodingForm((prev: any) => ({ ...prev, title: e.target.value }))} />
+                          </div>
+                          <div>
+                            <Label>Description</Label>
+                            <Textarea value={editCodingForm?.description} onChange={(e) => setEditCodingForm((prev: any) => ({ ...prev, description: e.target.value }))} rows={3} />
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                              <Label>Category</Label>
+                              <Select value={editCodingForm?.category} onValueChange={(v) => setEditCodingForm((prev: any) => ({ ...prev, category: v }))}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Arrays">Arrays</SelectItem>
+                                  <SelectItem value="Strings">Strings</SelectItem>
+                                  <SelectItem value="Linked Lists">Linked Lists</SelectItem>
+                                  <SelectItem value="Trees">Trees</SelectItem>
+                                  <SelectItem value="Graphs">Graphs</SelectItem>
+                                  <SelectItem value="Dynamic Programming">Dynamic Programming</SelectItem>
+                                  <SelectItem value="Recursion">Recursion</SelectItem>
+                                  <SelectItem value="Sorting">Sorting</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Difficulty</Label>
+                              <Select value={editCodingForm?.difficulty} onValueChange={(v) => setEditCodingForm((prev: any) => ({ ...prev, difficulty: v }))}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Easy">Easy</SelectItem>
+                                  <SelectItem value="Medium">Medium</SelectItem>
+                                  <SelectItem value="Hard">Hard</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Level</Label>
+                              <Select value={editCodingForm?.level?.toString()} onValueChange={(v) => setEditCodingForm((prev: any) => ({ ...prev, level: parseInt(v) }))}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">Level 1</SelectItem>
+                                  <SelectItem value="2">Level 2</SelectItem>
+                                  <SelectItem value="3">Level 3</SelectItem>
+                                  <SelectItem value="4">Level 4</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                          <div>
+                            <Label>Approach</Label>
+                            <Textarea value={editCodingForm?.approach} onChange={(e) => setEditCodingForm((prev: any) => ({ ...prev, approach: e.target.value }))} rows={2} />
+                          </div>
+                          <div>
+                            <Label>Solution</Label>
+                            <Textarea value={editCodingForm?.solution} onChange={(e) => setEditCodingForm((prev: any) => ({ ...prev, solution: e.target.value }))} rows={4} className="font-mono text-sm" />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button onClick={handleUpdateCoding} disabled={saving} className="flex-1">Save Changes</Button>
+                            <Button onClick={() => {setEditingCodingId(null); setEditCodingForm(null);}} variant="outline" className="flex-1">Cancel</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => toggleCodingSelection(q.id)}
+                            className="mt-1 flex-shrink-0"
+                          >
+                            {selectedCodingIds.has(q.id) ? (
+                              <CheckSquare className="h-5 w-5 text-primary" />
+                            ) : (
+                              <Square className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </button>
+                          <div className="flex justify-between items-start flex-1">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{q.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{q.description?.substring(0, 80)}...</p>
+                              <div className="flex gap-2 mt-2">
+                                <span className="text-xs bg-warning/10 text-warning px-2 py-1 rounded">{q.category}</span>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  q.difficulty === 'Easy' ? 'bg-success/10 text-success' :
+                                  q.difficulty === 'Medium' ? 'bg-warning/10 text-warning' :
+                                  'bg-destructive/10 text-destructive'
+                                }`}>{q.difficulty}</span>
+                                <span className="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded">Level {q.level}</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => {
+                                setEditingCodingId(q.id);
+                                setEditCodingForm({ ...q });
+                              }}>Edit</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteCoding(q.id)}>Delete</Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* CSV Import - Coding Tab */}
+          <TabsContent value="import-coding">
+            <CSVImport 
+              type="coding"
+              onCountsUpdated={fetchCodingQuestionCounts}
             />
           </TabsContent>
 

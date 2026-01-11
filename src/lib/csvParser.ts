@@ -4,7 +4,7 @@
  */
 
 export interface ParsedQuestion {
-  type: 'aptitude' | 'technical' | 'gd';
+  type: 'aptitude' | 'technical' | 'gd' | 'coding';
   data: Record<string, any>;
   rowNumber: number;
   errors: string[];
@@ -210,11 +210,55 @@ const validateGdQuestion = (data: Record<string, any>, rowNumber: number): strin
 };
 
 /**
+ * Validate coding question
+ */
+const validateCodingQuestion = (data: Record<string, any>, rowNumber: number): string[] => {
+  const errors: string[] = [];
+
+  // Required fields
+  if (!data.title || data.title.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "title" field`);
+  }
+  if (!data.description || data.description.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "description" field`);
+  }
+  if (!data.difficulty || data.difficulty.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "difficulty" field`);
+  }
+  if (!data.category || data.category.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "category" field`);
+  }
+  if (data.level === undefined || data.level === '') {
+    errors.push(`Row ${rowNumber}: Missing "level" field`);
+  }
+  if (!data.approach || data.approach.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "approach" field`);
+  }
+  if (!data.solution || data.solution.toString().trim() === '') {
+    errors.push(`Row ${rowNumber}: Missing "solution" field`);
+  }
+
+  // Validate level
+  const level = parseInt(data.level?.toString() || '');
+  if (isNaN(level) || level < 1 || level > 4) {
+    errors.push(`Row ${rowNumber}: "level" must be 1-4`);
+  }
+
+  // Validate difficulty
+  const validDifficulties = ['Easy', 'Medium', 'Hard'];
+  if (data.difficulty && !validDifficulties.includes(data.difficulty.toString().trim())) {
+    errors.push(`Row ${rowNumber}: Invalid difficulty. Must be one of: ${validDifficulties.join(', ')}`);
+  }
+
+  return errors;
+};
+
+/**
  * Parse and validate CSV file based on type
  */
 export const validateAndParseCSV = (
   fileContent: string,
-  type: 'aptitude' | 'technical' | 'gd'
+  type: 'aptitude' | 'technical' | 'gd' | 'coding'
 ): ParseResult => {
   try {
     const rows = parseCSV(fileContent);
@@ -273,6 +317,9 @@ export const validateAndParseCSV = (
         case 'gd':
           errors = validateGdQuestion(data, rowNumber);
           break;
+        case 'coding':
+          errors = validateCodingQuestion(data, rowNumber);
+          break;
       }
 
       const parsedQuestion: ParsedQuestion = {
@@ -302,7 +349,8 @@ export const validateAndParseCSV = (
         byType: {
           aptitude: type === 'aptitude' ? questions.length : 0,
           technical: type === 'technical' ? questions.length : 0,
-          gd: type === 'gd' ? questions.length : 0
+          gd: type === 'gd' ? questions.length : 0,
+          coding: type === 'coding' ? questions.length : 0
         }
       }
     };
@@ -355,7 +403,7 @@ export const formatForDatabase = (parsedQuestions: ParsedQuestion[], userId: str
           level: parseInt(data.level.toString()),
           created_by: userId
         };
-      } else {
+      } else if (pq.type === 'gd') {
         // GD type
         // Parse JSON arrays if provided
         const parseArray = (str: string) => {
@@ -376,6 +424,33 @@ export const formatForDatabase = (parsedQuestions: ParsedQuestion[], userId: str
           tips: parseArray(data.tips?.toString() || ''),
           conclusion: data.conclusion.toString().trim(),
           level: parseInt(data.level.toString()),
+          created_by: userId
+        };
+      } else {
+        // Coding type
+        // Parse examples JSON array if provided
+        const parseExamples = (str: string) => {
+          if (!str || str.trim() === '') return [];
+          try {
+            return JSON.parse(str);
+          } catch {
+            // Try to parse as semicolon-separated input|output pairs
+            return str.split(';').map(pair => {
+              const [input, output] = pair.split('|').map(s => s.trim());
+              return { input: input || '', output: output || '' };
+            }).filter(e => e.input || e.output);
+          }
+        };
+
+        return {
+          title: data.title.toString().trim(),
+          description: data.description.toString().trim(),
+          difficulty: data.difficulty.toString().trim(),
+          category: data.category.toString().trim(),
+          level: parseInt(data.level.toString()),
+          examples: parseExamples(data.examples?.toString() || ''),
+          approach: data.approach.toString().trim(),
+          solution: data.solution.toString().trim(),
           created_by: userId
         };
       }
