@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface CSVImportProps {
-  type: 'aptitude' | 'technical' | 'gd';
+  type: 'aptitude' | 'technical' | 'gd' | 'coding';
   onImportComplete?: (count: number) => void;
   onCountsUpdated?: () => Promise<void>;
 }
@@ -33,6 +33,8 @@ export const CSVImport: React.FC<CSVImportProps> = ({ type, onImportComplete, on
         return 'Technical';
       case 'gd':
         return 'GD Topic';
+      case 'coding':
+        return 'Coding';
     }
   };
 
@@ -54,6 +56,11 @@ Databases,1,What does SQL stand for?,Structured Query Language,Simple Query Lang
         return `title,category,level,description,points_for,points_against,conclusion
 AI in Healthcare,Technology,2,"Impact of artificial intelligence in healthcare sector","Improves diagnosis; Automates routine tasks; Reduces cost","Job displacement; Privacy concerns; Expensive setup","AI should be used as a tool to assist doctors, not replace them"
 Remote Work,Business,1,"Should companies promote remote work?","Better work-life balance; No commute; Higher productivity","Team cohesion issues; Communication challenges; Isolation","Hybrid model combining office and remote work is optimal"`;
+
+      case 'coding':
+        return `title,description,difficulty,category,level,examples,approach,solution
+Two Sum,Find two numbers that add up to target,Easy,Arrays,1,"[{\"input\": \"nums=[2,7,11,15], target=9\", \"output\": \"[0,1]\"}]","Use a hashmap to store complement values","function twoSum(nums, target) { const map = {}; for(let i=0; i<nums.length; i++) { if(map[target-nums[i]] !== undefined) return [map[target-nums[i]], i]; map[nums[i]] = i; } }"
+Reverse String,Reverse a given string in place,Easy,Strings,1,"[{\"input\": \"hello\", \"output\": \"olleh\"}]","Use two pointers from start and end","function reverseString(s) { return s.split('').reverse().join(''); }"`;
     }
   };
 
@@ -181,9 +188,12 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
         const chunk = questionsToInsert.slice(i, i + chunkSize);
         
         try {
+          const tableName = type === 'aptitude' ? 'aptitude_questions' : 
+                           type === 'technical' ? 'technical_mcq_questions' : 
+                           type === 'coding' ? 'technical_questions' : 'gd_topics';
           const { error } = await supabase
-            .from(type === 'aptitude' ? 'aptitude_questions' : type === 'technical' ? 'technical_mcq_questions' : 'gd_topics')
-            .insert(chunk);
+            .from(tableName)
+            .insert(chunk as any);
 
           if (error) {
             console.error('Insert error:', error);
@@ -250,23 +260,33 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
   const validCount = parsedQuestions.filter(q => q.errors.length === 0).length;
   const invalidCount = parsedQuestions.length - validCount;
 
-  // Get Technical Round specific format info
-  const getTechnicalFormatInfo = () => {
-    if (type !== 'technical') return null;
-    return {
-      columns: ['category', 'level', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'explanation'],
-      categories: ['Data Structures', 'Algorithms', 'Programming', 'Databases', 'Networking', 'Operating Systems', 'Web Development', 'OOP'],
-      levels: ['1', '2', '3', '4']
-    };
+  // Get format info for specific types
+  const getFormatInfo = () => {
+    if (type === 'technical') {
+      return {
+        columns: ['category', 'level', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'explanation'],
+        categories: ['Data Structures', 'Algorithms', 'Programming', 'Databases', 'Networking', 'Operating Systems', 'Web Development', 'OOP'],
+        levels: ['1', '2', '3', '4']
+      };
+    }
+    if (type === 'coding') {
+      return {
+        columns: ['title', 'description', 'difficulty', 'category', 'level', 'examples', 'approach', 'solution'],
+        categories: ['Arrays', 'Strings', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming', 'Recursion', 'Sorting'],
+        difficulties: ['Easy', 'Medium', 'Hard'],
+        levels: ['1', '2', '3', '4']
+      };
+    }
+    return null;
   };
 
-  const formatInfo = getTechnicalFormatInfo();
+  const formatInfo = getFormatInfo();
 
   return (
     <Card className="w-full">
       <CardHeader className="border-b border-border pb-4">
         <CardTitle className="flex items-center gap-3 text-2xl">
-          {type === 'technical' ? (
+          {type === 'technical' || type === 'coding' ? (
             <Code2 className="h-6 w-6 text-accent" />
           ) : (
             <Upload className="h-6 w-6" />
@@ -279,8 +299,8 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
       </CardHeader>
 
       <CardContent className="space-y-6 pt-6">
-        {/* Step-by-Step Guide for Technical */}
-        {type === 'technical' && (
+        {/* Step-by-Step Guide for Technical and Coding */}
+        {(type === 'technical' || type === 'coding') && (
           <div className="bg-accent/5 border border-accent/20 rounded-lg p-5 mb-4">
             <div className="flex items-start gap-3 mb-4">
               <Info className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
@@ -314,8 +334,8 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
           </div>
         )}
 
-        {/* CSV Format Requirements - Technical Specific */}
-        {type === 'technical' && formatInfo && (
+        {/* CSV Format Requirements - Technical and Coding Specific */}
+        {(type === 'technical' || type === 'coding') && formatInfo && (
           <Card className="bg-muted/30 border-2 border-border">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -353,13 +373,23 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-foreground mb-1.5">Question Levels:</p>
+                  <p className="text-xs font-semibold text-foreground mb-1.5">
+                    {type === 'coding' ? 'Difficulty Levels:' : 'Question Levels:'}
+                  </p>
                   <div className="flex gap-1.5">
-                    {formatInfo.levels.map(lev => (
-                      <span key={lev} className="px-2 py-1 bg-background border border-border rounded text-xs text-muted-foreground font-mono">
-                        {lev}
-                      </span>
-                    ))}
+                    {type === 'coding' && 'difficulties' in formatInfo ? (
+                      formatInfo.difficulties.map(diff => (
+                        <span key={diff} className="px-2 py-1 bg-background border border-border rounded text-xs text-muted-foreground">
+                          {diff}
+                        </span>
+                      ))
+                    ) : (
+                      formatInfo.levels.map(lev => (
+                        <span key={lev} className="px-2 py-1 bg-background border border-border rounded text-xs text-muted-foreground font-mono">
+                          {lev}
+                        </span>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
@@ -391,6 +421,8 @@ Remote Work,Business,1,"Should companies promote remote work?","Better work-life
                   <p className="text-sm text-muted-foreground max-w-md">
                     {type === 'technical' 
                       ? 'Upload a CSV file containing your technical questions. Make sure it follows the format shown above.'
+                      : type === 'coding'
+                      ? 'Upload a CSV file containing your coding problems. Include title, description, solution, and examples.'
                       : 'Drop your CSV file here or click browse to select from your computer'
                     }
                   </p>
