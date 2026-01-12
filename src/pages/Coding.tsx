@@ -24,7 +24,15 @@ import {
   Award,
   Trophy,
   Crown,
-  RotateCcw
+  RotateCcw,
+  Type,
+  Layers,
+  Link2,
+  Zap,
+  Binary,
+  GitBranch,
+  Search,
+  Shuffle
 } from 'lucide-react';
 import {
   Select,
@@ -61,7 +69,14 @@ const LANGUAGES = [
 ];
 
 const categories = [
-  { id: 'all', name: 'All Categories', icon: Code },
+  { id: 'String', name: 'String', icon: Type, description: 'String manipulation & parsing' },
+  { id: 'Array', name: 'Array', icon: Layers, description: 'Array operations & algorithms' },
+  { id: 'LinkedList', name: 'Linked List', icon: Link2, description: 'Linked list problems' },
+  { id: 'Dynamic Programming', name: 'Dynamic Programming', icon: Zap, description: 'DP & optimization' },
+  { id: 'Tree', name: 'Tree', icon: GitBranch, description: 'Binary trees & traversals' },
+  { id: 'Searching', name: 'Searching', icon: Search, description: 'Search algorithms' },
+  { id: 'Sorting', name: 'Sorting', icon: Shuffle, description: 'Sorting algorithms' },
+  { id: 'General', name: 'General', icon: Code, description: 'Mixed problems' },
 ];
 
 const levelConfig = [
@@ -88,16 +103,22 @@ const Coding = () => {
   const [trackedQuestions, setTrackedQuestions] = useState<Set<string>>(new Set());
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const categoryQuestions = selectedCategory 
+    ? questions.filter(q => q.category === selectedCategory)
+    : [];
+
   const levelQuestions = selectedLevel
-    ? questions.filter(q => q.level === selectedLevel && (selectedCategory === 'all' || q.category === selectedCategory))
+    ? categoryQuestions.filter(q => q.level === selectedLevel)
     : [];
 
   const { progress, loading: progressLoading } = useLevelProgress(
     user?.id,
     'coding',
-    selectedCategory || 'all',
-    levelQuestions
+    selectedCategory || '',
+    categoryQuestions
   );
+
+  const currentCategory = categories.find(c => c.id === selectedCategory);
 
   useEffect(() => {
     fetchQuestions();
@@ -338,19 +359,26 @@ const Coding = () => {
             <p className="text-muted-foreground">Choose a category to start practicing</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
-                className="group bg-card rounded-2xl shadow-lg border-2 border-border p-6 text-center hover:border-accent hover:shadow-xl transition-all"
-              >
-                <div className="w-14 h-14 mx-auto rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4 group-hover:bg-accent/30 transition-colors">
-                  <cat.icon className="w-7 h-7 text-accent" />
-                </div>
-                <h3 className="font-semibold text-foreground">{cat.name}</h3>
-              </button>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+            {categories.map((cat) => {
+              const catQuestions = questions.filter(q => q.category === cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className="group bg-card rounded-2xl shadow-lg border-2 border-border p-6 text-center hover:border-accent hover:shadow-xl transition-all"
+                >
+                  <div className="w-14 h-14 mx-auto rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4 group-hover:bg-accent/30 transition-colors">
+                    <cat.icon className="w-7 h-7 text-accent" />
+                  </div>
+                  <h3 className="font-semibold text-foreground">{cat.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{cat.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {catQuestions.length} {catQuestions.length === 1 ? 'problem' : 'problems'}
+                  </p>
+                </button>
+              );
+            })}
           </div>
         </main>
       </div>
@@ -368,7 +396,9 @@ const Coding = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-xl font-bold text-foreground">Coding Round</h1>
+                <h1 className="text-xl font-bold text-foreground">
+                  {currentCategory?.name || 'Coding Round'}
+                </h1>
                 <p className="text-sm text-muted-foreground">Select difficulty level</p>
               </div>
             </div>
@@ -377,16 +407,26 @@ const Coding = () => {
 
         <main className="container mx-auto px-4 py-8">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-foreground mb-2">Choose Level</h2>
-            <p className="text-muted-foreground">Progress through levels by completing challenges</p>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              {currentCategory && (
+                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+                  <currentCategory.icon className="w-5 h-5 text-accent" />
+                </div>
+              )}
+              <h2 className="text-2xl font-bold text-foreground">{currentCategory?.name}</h2>
+            </div>
+            <p className="text-muted-foreground">
+              {categoryQuestions.length} problems available • Complete each level with 80%+ to unlock next
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             {levelConfig.map((config, idx) => {
               const level = idx + 1;
+              const questionsInLevel = categoryQuestions.filter(q => q.level === level);
               const levelData = progress[level] || { 
                 level, 
-                totalQuestions: 0, 
+                totalQuestions: questionsInLevel.length, 
                 answeredQuestions: 0, 
                 correctAnswers: 0, 
                 accuracy: 0, 
@@ -409,7 +449,7 @@ const Coding = () => {
                     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
                       <div className="flex flex-col items-center gap-2">
                         <Lock className="w-8 h-8 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Complete Level {level - 1}</span>
+                        <span className="text-xs text-muted-foreground">Need 80% in Level {level - 1}</span>
                       </div>
                     </div>
                   )}
@@ -420,10 +460,13 @@ const Coding = () => {
                     <Icon className="w-7 h-7 text-accent" />
                   </div>
                   <h3 className="font-semibold text-foreground">{config.name}</h3>
-                  <p className="text-xs text-muted-foreground mb-3">{config.subtitle}</p>
+                  <p className="text-xs text-muted-foreground">{config.subtitle}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {questionsInLevel.length} {questionsInLevel.length === 1 ? 'problem' : 'problems'}
+                  </p>
 
-                  {levelData.totalQuestions > 0 && (
-                    <div className="space-y-2">
+                  {levelData.isUnlocked && levelData.answeredQuestions > 0 && (
+                    <div className="mt-3 space-y-2">
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-primary to-accent transition-all"
@@ -431,7 +474,7 @@ const Coding = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {levelData.answeredQuestions}/{levelData.totalQuestions} attempted
+                        {levelData.answeredQuestions}/{levelData.totalQuestions} • {levelData.accuracy}% accuracy
                       </p>
                     </div>
                   )}
@@ -445,9 +488,7 @@ const Coding = () => {
   }
 
   // Questions List Screen
-  const filteredQuestions = questions.filter(q =>
-    q.level === selectedLevel && (selectedCategory === 'all' || q.category === selectedCategory)
-  );
+  const filteredQuestions = categoryQuestions.filter(q => q.level === selectedLevel);
 
   const shuffledQuestions = user
     ? seededShuffle(filteredQuestions, createQuestionSeed(user.id, selectedLevel))
