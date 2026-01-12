@@ -25,10 +25,18 @@ interface Question {
   id: string;
   question: string;
   options: string[];
-  correct: number;
-  explanation: string;
+  correct?: number; // Now optional - only populated after server validation
+  explanation?: string; // Now optional - only populated after server validation
   category: string;
   level: number;
+}
+
+interface AnswerResult {
+  question: Question;
+  selectedAnswerIndex: number;
+  isCorrect: boolean;
+  correctAnswer: number;
+  explanation: string;
 }
 
 const levelConfig = [
@@ -43,6 +51,7 @@ const Technical = () => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [validatingAnswer, setValidatingAnswer] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -50,11 +59,7 @@ const Technical = () => {
   const [score, setScore] = useState({ correct: 0, attempted: 0 });
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
   const [isLevelComplete, setIsLevelComplete] = useState(false);
-  const [questionAnswersHistory, setQuestionAnswersHistory] = useState<Array<{
-    question: Question;
-    selectedAnswerIndex: number;
-    isCorrect: boolean;
-  }>>([]);
+  const [questionAnswersHistory, setQuestionAnswersHistory] = useState<AnswerResult[]>([]);
   const questionStartTime = useRef<number>(Date.now());
 
   const levelQuestions = selectedLevel
@@ -75,8 +80,9 @@ const Technical = () => {
 
   const fetchQuestions = async () => {
     setLoading(true);
+    // Use public view that doesn't expose correct_answer
     const { data, error } = await supabase
-      .from('technical_mcq_questions')
+      .from('technical_mcq_questions_public')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -87,15 +93,13 @@ const Technical = () => {
         id: q.id,
         question: q.question,
         options: q.options as string[],
-        correct: q.correct_answer,
-        explanation: q.explanation,
+        // correct and explanation are NOT included - server validates answers
         category: q.category,
         level: q.level || 1
       })));
     }
     setLoading(false);
   };
-
   const fetchAnsweredQuestions = async () => {
     if (!user) return;
     
@@ -125,40 +129,74 @@ const Technical = () => {
   const currentQuestion = shuffledQuestions[currentQuestionIndex];
 
   const handleAnswerSelect = async (index: number) => {
-    if (selectedAnswer !== null || !currentQuestion) return;
+    if (selectedAnswer !== null || !currentQuestion || validatingAnswer) return;
     
-    const isCorrect = index === currentQuestion.correct;
     const timeSpent = Math.round((Date.now() - questionStartTime.current) / 1000);
-    
     setSelectedAnswer(index);
-    setScore(prev => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      attempted: prev.attempted + 1
-    }));
+    setValidatingAnswer(true);
 
-    // Track question answer for results display later
-    setQuestionAnswersHistory(prev => [...prev, {
-      question: currentQuestion,
-      selectedAnswerIndex: index,
-      isCorrect
-    }]);
-
-    if (user && !answeredQuestions.has(currentQuestion.id)) {
-      const { error } = await supabase
-        .from('user_progress')
-        .insert({
-          user_id: user.id,
-          question_type: 'technical_mcq',
-          question_id: currentQuestion.id,
-          is_correct: isCorrect,
-          time_spent_seconds: timeSpent
-        });
-
-      if (error) {
-        console.error('Error saving progress:', error);
-      } else {
-        setAnsweredQuestions(prev => new Set([...prev, currentQuestion.id]));
+    try {
+      // Get session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        console.error('No session available');
+        setValidatingAnswer(false);
+        return;
       }
+
+      // Call server-side validation
+      const { data: validationResult, error: validationError } = await supabase.functions.invoke('validate-answer', {
+        body: {
+          questionId: currentQuestion.id,
+          questionType: 'technical_mcq',
+          selectedAnswer: index
+        }
+      });
+
+      if (validationError) {
+        console.error('Validation error:', validationError);
+        setValidatingAnswer(false);
+        return;
+      }
+
+      const isCorrect = validationResult.isCorrect;
+      
+      setScore(prev => ({
+        correct: prev.correct + (isCorrect ? 1 : 0),
+        attempted: prev.attempted + 1
+      }));
+
+      // Store answer with correct answer and explanation from server
+      setQuestionAnswersHistory(prev => [...prev, {
+        question: currentQuestion,
+        selectedAnswerIndex: index,
+        isCorrect,
+        correctAnswer: validationResult.correctAnswer,
+        explanation: validationResult.explanation
+      }]);
+
+      if (user && !answeredQuestions.has(currentQuestion.id)) {
+        const { error } = await supabase
+          .from('user_progress')
+          .insert({
+            user_id: user.id,
+            question_type: 'technical_mcq',
+            question_id: currentQuestion.id,
+            is_correct: isCorrect,
+            time_spent_seconds: timeSpent
+          });
+
+        if (error) {
+          console.error('Error saving progress:', error);
+        } else {
+          setAnsweredQuestions(prev => new Set([...prev, currentQuestion.id]));
+        }
+      }
+    } catch (error) {
+      console.error('Error validating answer:', error);
+    } finally {
+      setValidatingAnswer(false);
     }
   };
 
@@ -401,9 +439,9 @@ const Technical = () => {
                   <div className="space-y-2 mb-4">
                     {item.question.options.map((option, optIdx) => {
                       let optionStyle = 'bg-muted/30 border-border';
-                      if (optIdx === item.question.correct) {
+                      if (optIdx === item.correctAnswer) {
                         optionStyle = 'bg-success/10 border-success text-success';
-                      } else if (optIdx === item.selectedAnswerIndex && optIdx !== item.question.correct) {
+                      } else if (optIdx === item.selectedAnswerIndex && optIdx !== item.correctAnswer) {
                         optionStyle = 'bg-destructive/10 border-destructive text-destructive';
                       }
                       
@@ -417,10 +455,10 @@ const Technical = () => {
                               {String.fromCharCode(65 + optIdx)}
                             </span>
                             <span>{option}</span>
-                            {optIdx === item.question.correct && (
+                            {optIdx === item.correctAnswer && (
                               <CheckCircle2 className="w-4 h-4 ml-auto text-success" />
                             )}
-                            {optIdx === item.selectedAnswerIndex && optIdx !== item.question.correct && (
+                            {optIdx === item.selectedAnswerIndex && optIdx !== item.correctAnswer && (
                               <XCircle className="w-4 h-4 ml-auto text-destructive" />
                             )}
                           </div>
@@ -436,7 +474,7 @@ const Technical = () => {
                       <span className="font-medium text-primary text-sm">Explanation</span>
                     </div>
                     <p className="text-muted-foreground text-sm">
-                      {item.question.explanation}
+                      {item.explanation}
                     </p>
                   </div>
                 </div>
@@ -485,9 +523,9 @@ const Technical = () => {
                   <button
                     key={index}
                     onClick={() => handleAnswerSelect(index)}
-                    disabled={selectedAnswer !== null}
+                    disabled={selectedAnswer !== null || validatingAnswer}
                     className={`w-full p-4 rounded-xl border-2 text-left transition-all ${getOptionStyle(index)} ${
-                      selectedAnswer === null ? 'cursor-pointer' : 'cursor-default'
+                      selectedAnswer === null && !validatingAnswer ? 'cursor-pointer' : 'cursor-default'
                     }`}
                   >
                     <div className="flex items-center gap-4">
@@ -495,10 +533,22 @@ const Technical = () => {
                         {String.fromCharCode(65 + index)}
                       </span>
                       <span className="text-foreground">{option}</span>
+                      {validatingAnswer && selectedAnswer === index && (
+                        <Loader2 className="w-5 h-5 animate-spin text-primary ml-auto" />
+                      )}
                     </div>
                   </button>
                 ))}
               </div>
+
+              {validatingAnswer && (
+                <div className="mt-6 p-4 rounded-xl bg-muted/50 border border-border animate-slide-up">
+                  <p className="text-center text-muted-foreground font-medium flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Validating your answer...
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Next Button */}

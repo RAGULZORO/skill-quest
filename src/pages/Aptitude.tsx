@@ -27,10 +27,18 @@ interface Question {
   id: string;
   question: string;
   options: string[];
-  correct: number;
-  explanation: string;
+  correct?: number; // Now optional - only populated after server validation
+  explanation?: string; // Now optional - only populated after server validation
   category: string;
   level: number;
+}
+
+interface AnswerResult {
+  question: Question;
+  selectedAnswerIndex: number;
+  isCorrect: boolean;
+  correctAnswer: number;
+  explanation: string;
 }
 
 const categories = [
@@ -51,6 +59,7 @@ const Aptitude = () => {
   const { user } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [validatingAnswer, setValidatingAnswer] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -59,11 +68,7 @@ const Aptitude = () => {
   const [score, setScore] = useState({ correct: 0, attempted: 0 });
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<string>>(new Set());
   const [isLevelComplete, setIsLevelComplete] = useState(false);
-  const [questionAnswersHistory, setQuestionAnswersHistory] = useState<Array<{
-    question: Question;
-    selectedAnswerIndex: number;
-    isCorrect: boolean;
-  }>>([]);
+  const [questionAnswersHistory, setQuestionAnswersHistory] = useState<AnswerResult[]>([]);
   const questionStartTime = useRef<number>(Date.now());
 
   const categoryQuestions = selectedCategory 
@@ -84,8 +89,9 @@ const Aptitude = () => {
 
   const fetchQuestions = async () => {
     setLoading(true);
+    // Use public view that doesn't expose correct_answer
     const { data, error } = await supabase
-      .from('aptitude_questions')
+      .from('aptitude_questions_public')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -96,15 +102,13 @@ const Aptitude = () => {
         id: q.id,
         question: q.question,
         options: q.options as string[],
-        correct: q.correct_answer,
-        explanation: q.explanation,
+        // correct and explanation are NOT included - server validates answers
         category: q.category,
         level: (q as any).level || 1
       })));
     }
     setLoading(false);
   };
-
   const fetchAnsweredQuestions = async () => {
     if (!user) return;
     
@@ -135,41 +139,74 @@ const Aptitude = () => {
   const currentQuestion = shuffledQuestions[currentQuestionIndex];
 
   const handleAnswerSelect = async (index: number) => {
-    if (selectedAnswer !== null || !currentQuestion) return;
+    if (selectedAnswer !== null || !currentQuestion || validatingAnswer) return;
     
-    const isCorrect = index === currentQuestion.correct;
     const timeSpent = Math.round((Date.now() - questionStartTime.current) / 1000);
-    
     setSelectedAnswer(index);
-    // Don't show explanation yet - only show after all questions are answered
-    setScore(prev => ({
-      correct: prev.correct + (isCorrect ? 1 : 0),
-      attempted: prev.attempted + 1
-    }));
+    setValidatingAnswer(true);
 
-    // Track question answer for results display later
-    setQuestionAnswersHistory(prev => [...prev, {
-      question: currentQuestion,
-      selectedAnswerIndex: index,
-      isCorrect
-    }]);
-
-    if (user && !answeredQuestions.has(currentQuestion.id)) {
-      const { error } = await supabase
-        .from('user_progress')
-        .insert({
-          user_id: user.id,
-          question_type: 'aptitude',
-          question_id: currentQuestion.id,
-          is_correct: isCorrect,
-          time_spent_seconds: timeSpent
-        });
-
-      if (error) {
-        console.error('Error saving progress:', error);
-      } else {
-        setAnsweredQuestions(prev => new Set([...prev, currentQuestion.id]));
+    try {
+      // Get session for auth header
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        console.error('No session available');
+        setValidatingAnswer(false);
+        return;
       }
+
+      // Call server-side validation
+      const { data: validationResult, error: validationError } = await supabase.functions.invoke('validate-answer', {
+        body: {
+          questionId: currentQuestion.id,
+          questionType: 'aptitude',
+          selectedAnswer: index
+        }
+      });
+
+      if (validationError) {
+        console.error('Validation error:', validationError);
+        setValidatingAnswer(false);
+        return;
+      }
+
+      const isCorrect = validationResult.isCorrect;
+      
+      setScore(prev => ({
+        correct: prev.correct + (isCorrect ? 1 : 0),
+        attempted: prev.attempted + 1
+      }));
+
+      // Store answer with correct answer and explanation from server
+      setQuestionAnswersHistory(prev => [...prev, {
+        question: currentQuestion,
+        selectedAnswerIndex: index,
+        isCorrect,
+        correctAnswer: validationResult.correctAnswer,
+        explanation: validationResult.explanation
+      }]);
+
+      if (user && !answeredQuestions.has(currentQuestion.id)) {
+        const { error } = await supabase
+          .from('user_progress')
+          .insert({
+            user_id: user.id,
+            question_type: 'aptitude',
+            question_id: currentQuestion.id,
+            is_correct: isCorrect,
+            time_spent_seconds: timeSpent
+          });
+
+        if (error) {
+          console.error('Error saving progress:', error);
+        } else {
+          setAnsweredQuestions(prev => new Set([...prev, currentQuestion.id]));
+        }
+      }
+    } catch (error) {
+      console.error('Error validating answer:', error);
+    } finally {
+      setValidatingAnswer(false);
     }
   };
 
@@ -447,7 +484,7 @@ const Aptitude = () => {
                   <div className="space-y-2 mb-4">
                     {item.question.options.map((option, optionIndex) => {
                       const isUserAnswer = optionIndex === item.selectedAnswerIndex;
-                      const isCorrectAnswer = optionIndex === item.question.correct;
+                      const isCorrectAnswer = optionIndex === item.correctAnswer;
 
                       return (
                         <div
@@ -481,7 +518,7 @@ const Aptitude = () => {
                       <Lightbulb className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-medium text-foreground mb-1">Explanation</p>
-                        <p className="text-muted-foreground text-sm">{item.question.explanation}</p>
+                        <p className="text-muted-foreground text-sm">{item.explanation}</p>
                       </div>
                     </div>
                   </div>
@@ -564,42 +601,34 @@ const Aptitude = () => {
                       <button
                         key={index}
                         onClick={() => handleAnswerSelect(index)}
-                        disabled={selectedAnswer !== null}
+                        disabled={selectedAnswer !== null || validatingAnswer}
                         className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-center gap-3 ${getOptionStyle(index)}`}
                       >
                         <span className="w-8 h-8 rounded-lg bg-background flex items-center justify-center text-sm font-medium">
                           {String.fromCharCode(65 + index)}
                         </span>
                         <span className="flex-1">{option}</span>
-                        {/* Only show checkmark/X on results screen (after level complete) */}
-                        {isLevelComplete && selectedAnswer !== null && index === currentQuestion.correct && (
-                          <CheckCircle2 className="w-5 h-5 text-success" />
-                        )}
-                        {isLevelComplete && selectedAnswer === index && index !== currentQuestion.correct && (
-                          <XCircle className="w-5 h-5 text-destructive" />
+                        {validatingAnswer && selectedAnswer === index && (
+                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
                         )}
                       </button>
                     ))}
                   </div>
 
-                  {/* Explanation - Hidden until all questions answered */}
-                  {showExplanation && isLevelComplete && (
-                    <div className="mt-6 p-4 rounded-xl bg-primary/5 border border-primary/20 animate-slide-up">
-                      <div className="flex items-start gap-3">
-                        <Lightbulb className="w-5 h-5 text-primary mt-0.5" />
-                        <div>
-                          <p className="font-medium text-foreground mb-1">Explanation</p>
-                          <p className="text-muted-foreground text-sm">{currentQuestion.explanation}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Message during question phase */}
-                  {selectedAnswer !== null && !isLevelComplete && (
+                  {selectedAnswer !== null && !isLevelComplete && !validatingAnswer && (
                     <div className="mt-6 p-4 rounded-xl bg-primary/10 border border-primary/30 animate-slide-up">
                       <p className="text-center text-foreground font-medium">
                         ✓ Answer recorded. Continue to the next question to see explanations and results at the end!
+                      </p>
+                    </div>
+                  )}
+
+                  {validatingAnswer && (
+                    <div className="mt-6 p-4 rounded-xl bg-muted/50 border border-border animate-slide-up">
+                      <p className="text-center text-muted-foreground font-medium flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Validating your answer...
                       </p>
                     </div>
                   )}
