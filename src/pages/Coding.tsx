@@ -28,11 +28,7 @@ import {
   Type,
   Layers,
   Link2,
-  Zap,
-  Binary,
-  GitBranch,
-  Search,
-  Shuffle
+  Zap
 } from 'lucide-react';
 import {
   Select,
@@ -73,10 +69,6 @@ const categories = [
   { id: 'Array', name: 'Array', icon: Layers, description: 'Array operations & algorithms' },
   { id: 'LinkedList', name: 'Linked List', icon: Link2, description: 'Linked list problems' },
   { id: 'Dynamic Programming', name: 'Dynamic Programming', icon: Zap, description: 'DP & optimization' },
-  { id: 'Tree', name: 'Tree', icon: GitBranch, description: 'Binary trees & traversals' },
-  { id: 'Searching', name: 'Searching', icon: Search, description: 'Search algorithms' },
-  { id: 'Sorting', name: 'Sorting', icon: Shuffle, description: 'Sorting algorithms' },
-  { id: 'General', name: 'General', icon: Code, description: 'Mixed problems' },
 ];
 
 const levelConfig = [
@@ -416,7 +408,7 @@ const Coding = () => {
               <h2 className="text-2xl font-bold text-foreground">{currentCategory?.name}</h2>
             </div>
             <p className="text-muted-foreground">
-              {categoryQuestions.length} problems available • Complete each level with 80%+ to unlock next
+              {categoryQuestions.length} problems available • Complete each level to unlock the next
             </p>
           </div>
 
@@ -424,38 +416,54 @@ const Coding = () => {
             {levelConfig.map((config, idx) => {
               const level = idx + 1;
               const questionsInLevel = categoryQuestions.filter(q => q.level === level);
+              const prevLevelQuestions = level > 1 ? categoryQuestions.filter(q => q.level === level - 1) : [];
+              
+              // Get progress for previous level to check completion
+              const prevLevelData = level > 1 ? (progress[level - 1] || { 
+                answeredQuestions: 0, 
+                totalQuestions: prevLevelQuestions.length 
+              }) : null;
+              
+              // Level is unlocked if it's level 1 OR if previous level has all questions answered
+              const isLevelUnlocked = level === 1 || 
+                (prevLevelData && prevLevelData.totalQuestions > 0 && 
+                 prevLevelData.answeredQuestions >= prevLevelData.totalQuestions);
+              
               const levelData = progress[level] || { 
                 level, 
                 totalQuestions: questionsInLevel.length, 
                 answeredQuestions: 0, 
                 correctAnswers: 0, 
                 accuracy: 0, 
-                isUnlocked: level === 1 
+                isUnlocked: isLevelUnlocked 
               };
+              
+              // Override with our calculated unlock status
+              const actuallyUnlocked = isLevelUnlocked;
               const Icon = config.icon;
 
               return (
                 <button
                   key={level}
-                  onClick={() => levelData.isUnlocked && setSelectedLevel(level)}
-                  disabled={!levelData.isUnlocked}
+                  onClick={() => actuallyUnlocked && setSelectedLevel(level)}
+                  disabled={!actuallyUnlocked}
                   className={`group bg-card rounded-2xl shadow-lg border-2 border-border p-6 text-center transition-all relative overflow-hidden ${
-                    levelData.isUnlocked
+                    actuallyUnlocked
                       ? 'hover:border-accent hover:shadow-xl cursor-pointer'
                       : 'opacity-60 cursor-not-allowed'
                   }`}
                 >
-                  {!levelData.isUnlocked && (
+                  {!actuallyUnlocked && (
                     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10">
                       <div className="flex flex-col items-center gap-2">
                         <Lock className="w-8 h-8 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Need 80% in Level {level - 1}</span>
+                        <span className="text-xs text-muted-foreground">Complete Level {level - 1}</span>
                       </div>
                     </div>
                   )}
 
                   <div className={`w-14 h-14 mx-auto rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4 ${
-                    levelData.isUnlocked ? 'group-hover:bg-accent/30' : ''
+                    actuallyUnlocked ? 'group-hover:bg-accent/30' : ''
                   } transition-colors`}>
                     <Icon className="w-7 h-7 text-accent" />
                   </div>
@@ -465,7 +473,7 @@ const Coding = () => {
                     {questionsInLevel.length} {questionsInLevel.length === 1 ? 'problem' : 'problems'}
                   </p>
 
-                  {levelData.isUnlocked && levelData.answeredQuestions > 0 && (
+                  {actuallyUnlocked && levelData.answeredQuestions > 0 && (
                     <div className="mt-3 space-y-2">
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div
@@ -474,7 +482,7 @@ const Coding = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {levelData.answeredQuestions}/{levelData.totalQuestions} • {levelData.accuracy}% accuracy
+                        {levelData.answeredQuestions}/{levelData.totalQuestions} completed
                       </p>
                     </div>
                   )}
