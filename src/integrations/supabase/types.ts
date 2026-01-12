@@ -390,7 +390,72 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      aptitude_questions_public: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          explanation: string | null
+          id: string | null
+          level: number | null
+          options: Json | null
+          question: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Relationships: []
+      }
+      technical_mcq_questions_public: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          explanation: string | null
+          id: string | null
+          level: number | null
+          options: Json | null
+          question: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
