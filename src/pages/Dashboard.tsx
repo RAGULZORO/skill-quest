@@ -17,7 +17,8 @@ import {
   ChevronRight,
   Sparkles,
   User,
-  Settings
+  Settings,
+  BookOpen
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -68,6 +69,15 @@ const Dashboard = () => {
   };
 
   const categories = [
+    {
+      id: 'cheat-codes',
+      title: 'Aptitude Cheat Codes',
+      description: 'All formulas & shortcuts for quick revision before practice',
+      icon: BookOpen,
+      color: 'from-violet-500 to-purple-500',
+      stats: '100+ Formulas',
+      path: '/cheat-codes',
+    },
     {
       id: 'aptitude',
       title: 'Aptitude MCQs',

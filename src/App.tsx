@@ -15,6 +15,7 @@ import GroupDiscussion from "./pages/GroupDiscussion";
 import MockTests from "./pages/MockTests";
 import MockTest from "./pages/MockTest";
 import Admin from "./pages/Admin";
+import AptitudeCheatCodes from "./pages/AptitudeCheatCodes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -120,6 +121,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MockTest />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cheat-codes"
+        element={
+          <ProtectedRoute>
+            <AptitudeCheatCodes />
           </ProtectedRoute>
         }
       />
