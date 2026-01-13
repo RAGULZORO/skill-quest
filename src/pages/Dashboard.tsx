@@ -79,6 +79,15 @@ const Dashboard = () => {
       path: '/cheat-codes',
     },
     {
+      id: 'performance',
+      title: 'Performance Report',
+      description: 'Track your progress, identify weak areas, and view detailed analytics',
+      icon: Target,
+      color: 'from-rose-500 to-pink-500',
+      stats: 'Real-time Analytics',
+      path: '/performance',
+    },
+    {
       id: 'aptitude',
       title: 'Aptitude MCQs',
       description: 'Practice quantitative, logical reasoning, and verbal ability questions',

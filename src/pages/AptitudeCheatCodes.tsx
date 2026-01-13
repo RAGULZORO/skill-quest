@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   Percent, 
@@ -22,15 +18,7 @@ import {
   Droplets,
   Train,
   Binary,
-  Shuffle,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  BarChart3,
-  Target,
-  TrendingDown,
-  BookOpen,
-  Lightbulb
+  Shuffle
 } from 'lucide-react';
 
 interface FormulaCategory {
@@ -49,22 +37,6 @@ interface Formula {
   example?: string;
   tip?: string;
   commonMistakes?: string;
-}
-
-interface PerformanceData {
-  category: string;
-  total: number;
-  correct: number;
-  percentage: number;
-}
-
-interface MockTestPerformance {
-  testName: string;
-  score: number;
-  total: number;
-  percentage: number;
-  passed: boolean;
-  completedAt: string;
 }
 
 const formulaCategories: FormulaCategory[] = [
@@ -915,139 +887,7 @@ const formulaCategories: FormulaCategory[] = [
 
 const AptitudeCheatCodes = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<FormulaCategory | null>(null);
-  const [activeTab, setActiveTab] = useState('formulas');
-  const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
-  const [mockTestPerformance, setMockTestPerformance] = useState<MockTestPerformance[]>([]);
-  const [weakAreas, setWeakAreas] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (user && activeTab === 'report') {
-      fetchPerformanceData();
-    }
-  }, [user, activeTab]);
-
-  const fetchPerformanceData = async () => {
-    if (!user) return;
-    setLoading(true);
-
-    try {
-      // Fetch aptitude progress with categories
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_progress')
-        .select('question_id, is_correct, question_type')
-        .eq('user_id', user.id);
-
-      if (progressError) throw progressError;
-
-      // Fetch aptitude questions to get categories
-      const { data: aptitudeQuestions, error: aqError } = await supabase
-        .from('aptitude_questions_public')
-        .select('id, category');
-
-      if (aqError) throw aqError;
-
-      // Fetch technical MCQ questions for categories
-      const { data: techQuestions, error: tqError } = await supabase
-        .from('technical_mcq_questions_public')
-        .select('id, category');
-
-      if (tqError) throw tqError;
-
-      // Fetch mock test results
-      const { data: mockResults, error: mockError } = await supabase
-        .from('mock_test_results')
-        .select(`
-          score,
-          total_questions,
-          percentage,
-          passed,
-          completed_at,
-          mock_tests (name)
-        `)
-        .eq('user_id', user.id)
-        .order('completed_at', { ascending: false })
-        .limit(10);
-
-      if (mockError) throw mockError;
-
-      // Process category-wise performance
-      const categoryMap = new Map<string, { total: number; correct: number }>();
-
-      progressData?.forEach((p) => {
-        let category = 'General';
-        
-        if (p.question_type === 'aptitude') {
-          const q = aptitudeQuestions?.find(aq => aq.id === p.question_id);
-          category = q?.category || 'Aptitude General';
-        } else if (p.question_type === 'technical_mcq') {
-          const q = techQuestions?.find(tq => tq.id === p.question_id);
-          category = q?.category || 'Technical General';
-        } else if (p.question_type === 'mock_test') {
-          category = 'Mock Test';
-        }
-
-        const current = categoryMap.get(category) || { total: 0, correct: 0 };
-        categoryMap.set(category, {
-          total: current.total + 1,
-          correct: current.correct + (p.is_correct ? 1 : 0)
-        });
-      });
-
-      const performanceArray: PerformanceData[] = Array.from(categoryMap.entries()).map(([cat, data]) => ({
-        category: cat,
-        total: data.total,
-        correct: data.correct,
-        percentage: Math.round((data.correct / data.total) * 100)
-      }));
-
-      // Sort by percentage (ascending) to show weak areas first
-      performanceArray.sort((a, b) => a.percentage - b.percentage);
-      setPerformanceData(performanceArray);
-
-      // Identify weak areas (below 60%)
-      const weak = performanceArray
-        .filter(p => p.percentage < 60 && p.total >= 3)
-        .map(p => p.category);
-      setWeakAreas(weak);
-
-      // Process mock test results
-      const mockPerf: MockTestPerformance[] = (mockResults || []).map((r: any) => ({
-        testName: r.mock_tests?.name || 'Unknown Test',
-        score: r.score,
-        total: r.total_questions,
-        percentage: r.percentage,
-        passed: r.passed,
-        completedAt: r.completed_at
-      }));
-      setMockTestPerformance(mockPerf);
-
-    } catch (error) {
-      console.error('Error fetching performance data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getPerformanceColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-green-500';
-    if (percentage >= 60) return 'text-yellow-500';
-    return 'text-red-500';
-  };
-
-  const getPerformanceIcon = (percentage: number) => {
-    if (percentage >= 80) return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-    if (percentage >= 60) return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
-    return <XCircle className="w-5 h-5 text-red-500" />;
-  };
-
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return 'bg-green-500';
-    if (percentage >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -1066,7 +906,7 @@ const AptitudeCheatCodes = () => {
               {selectedCategory ? selectedCategory.name : 'Aptitude Cheat Codes'}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {selectedCategory ? 'Detailed formulas & explanations' : 'Master formulas + Track your progress'}
+              {selectedCategory ? 'Detailed formulas & explanations' : 'Master all formulas before practice'}
             </p>
           </div>
         </div>
@@ -1075,257 +915,54 @@ const AptitudeCheatCodes = () => {
       <main className="container mx-auto px-4 py-8">
         {!selectedCategory ? (
           <>
-            {/* Tabs for Formulas and Report */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="max-w-5xl mx-auto">
-              <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="formulas" className="gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  Formula Cheat Codes
-                </TabsTrigger>
-                <TabsTrigger value="report" className="gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Performance Report
-                </TabsTrigger>
-              </TabsList>
+            {/* Category Selection */}
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                📚 Formula Categories
+              </h2>
+              <p className="text-muted-foreground">
+                Select a category to view detailed formulas with step-by-step explanations
+              </p>
+            </div>
 
-              <TabsContent value="formulas">
-                {/* Category Selection */}
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-foreground mb-2">
-                    📚 Formula Categories
-                  </h2>
-                  <p className="text-muted-foreground">
-                    Select a category to view detailed formulas with step-by-step explanations
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+              {formulaCategories.map((category, idx) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category)}
+                  className="group bg-card rounded-2xl p-5 text-left shadow-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-scale-in"
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                >
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                    <category.icon className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <h3 className="font-semibold text-foreground text-sm mb-1">
+                    {category.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {category.formulas.length} formulas
                   </p>
-                </div>
+                </button>
+              ))}
+            </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
-                  {formulaCategories.map((category, idx) => (
-                    <button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category)}
-                      className="group bg-card rounded-2xl p-5 text-left shadow-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-scale-in"
-                      style={{ animationDelay: `${idx * 0.05}s` }}
-                    >
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                        <category.icon className="w-6 h-6 text-primary-foreground" />
-                      </div>
-                      <h3 className="font-semibold text-foreground text-sm mb-1">
-                        {category.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {category.formulas.length} formulas
-                      </p>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Tips Section */}
-                <div className="mt-12 max-w-3xl mx-auto">
-                  <Card className="bg-primary/5 border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        💡 Pro Tips for Success
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 text-sm text-muted-foreground">
-                      <p>✅ <strong>Understand, don't memorize</strong> - Know when to apply each formula</p>
-                      <p>✅ <strong>Practice with examples</strong> - Work through 2-3 problems for each formula</p>
-                      <p>✅ <strong>Create shortcuts</strong> - Develop your own tricks for quick calculations</p>
-                      <p>✅ <strong>Time yourself</strong> - Speed comes with consistent practice</p>
-                      <p>✅ <strong>Review daily</strong> - 10 minutes of revision beats 1 hour of cramming</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="report">
-                {/* Performance Report */}
-                {!user ? (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <AlertTriangle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Login Required</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Please login to view your performance report
-                      </p>
-                      <Button onClick={() => navigate('/auth')}>Login</Button>
-                    </CardContent>
-                  </Card>
-                ) : loading ? (
-                  <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">Loading your performance data...</p>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {/* Weak Areas Alert */}
-                    {weakAreas.length > 0 && (
-                      <Card className="bg-red-500/10 border-red-500/30">
-                        <CardHeader>
-                          <CardTitle className="text-lg flex items-center gap-2 text-red-500">
-                            <TrendingDown className="w-5 h-5" />
-                            Areas Needing Improvement
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground mb-4">
-                            Based on your practice and mock test performance, focus more on these areas:
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {weakAreas.map((area, idx) => (
-                              <span 
-                                key={idx}
-                                className="px-3 py-1.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-full text-sm font-medium"
-                              >
-                                {area}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="mt-4 p-3 bg-background/50 rounded-lg">
-                            <p className="text-sm flex items-start gap-2">
-                              <Lightbulb className="w-4 h-4 text-yellow-500 mt-0.5 flex-shrink-0" />
-                              <span>
-                                <strong>Tip:</strong> Review the formulas for these categories above, 
-                                then practice more questions in the Aptitude MCQs section.
-                              </span>
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {/* Category-wise Performance */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Target className="w-5 h-5 text-primary" />
-                          Category-wise Performance
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {performanceData.length === 0 ? (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            <p>No practice data yet. Start practicing to see your performance!</p>
-                            <Button 
-                              variant="outline" 
-                              className="mt-4"
-                              onClick={() => navigate('/aptitude')}
-                            >
-                              Start Practicing
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            {performanceData.map((item, idx) => (
-                              <div key={idx} className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    {getPerformanceIcon(item.percentage)}
-                                    <span className="font-medium">{item.category}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3">
-                                    <span className="text-sm text-muted-foreground">
-                                      {item.correct}/{item.total} correct
-                                    </span>
-                                    <span className={`font-bold ${getPerformanceColor(item.percentage)}`}>
-                                      {item.percentage}%
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full ${getProgressColor(item.percentage)} transition-all duration-500`}
-                                    style={{ width: `${item.percentage}%` }}
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Mock Test History */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <BarChart3 className="w-5 h-5 text-primary" />
-                          Mock Test History
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {mockTestPerformance.length === 0 ? (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            <p>No mock tests attempted yet. Take a mock test to track progress!</p>
-                            <Button 
-                              variant="outline" 
-                              className="mt-4"
-                              onClick={() => navigate('/mock-tests')}
-                            >
-                              Take Mock Test
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            {mockTestPerformance.map((test, idx) => (
-                              <div 
-                                key={idx} 
-                                className={`p-4 rounded-lg border ${test.passed ? 'bg-green-500/5 border-green-500/30' : 'bg-red-500/5 border-red-500/30'}`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <h4 className="font-medium">{test.testName}</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      {new Date(test.completedAt).toLocaleDateString('en-IN', {
-                                        day: 'numeric',
-                                        month: 'short',
-                                        year: 'numeric'
-                                      })}
-                                    </p>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className={`text-lg font-bold ${test.passed ? 'text-green-500' : 'text-red-500'}`}>
-                                      {test.percentage}%
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {test.score}/{test.total}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="mt-2">
-                                  <span className={`text-xs px-2 py-0.5 rounded-full ${test.passed ? 'bg-green-500/20 text-green-600' : 'bg-red-500/20 text-red-600'}`}>
-                                    {test.passed ? '✓ Passed' : '✗ Failed'}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Performance Legend */}
-                    <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span>Excellent (≥80%)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <span>Good (60-79%)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span>Needs Work (&lt;60%)</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+            {/* Tips Section */}
+            <div className="mt-12 max-w-3xl mx-auto">
+              <Card className="bg-primary/5 border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    💡 Pro Tips for Success
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  <p>✅ <strong>Understand, don't memorize</strong> - Know when to apply each formula</p>
+                  <p>✅ <strong>Practice with examples</strong> - Work through 2-3 problems for each formula</p>
+                  <p>✅ <strong>Create shortcuts</strong> - Develop your own tricks for quick calculations</p>
+                  <p>✅ <strong>Time yourself</strong> - Speed comes with consistent practice</p>
+                  <p>✅ <strong>Review daily</strong> - 10 minutes of revision beats 1 hour of cramming</p>
+                </CardContent>
+              </Card>
+            </div>
           </>
         ) : (
           <>

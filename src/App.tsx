@@ -16,6 +16,7 @@ import MockTests from "./pages/MockTests";
 import MockTest from "./pages/MockTest";
 import Admin from "./pages/Admin";
 import AptitudeCheatCodes from "./pages/AptitudeCheatCodes";
+import PerformanceReport from "./pages/PerformanceReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -129,6 +130,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AptitudeCheatCodes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/performance"
+        element={
+          <ProtectedRoute>
+            <PerformanceReport />
           </ProtectedRoute>
         }
       />
