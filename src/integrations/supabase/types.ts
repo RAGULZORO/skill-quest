@@ -1,0 +1,601 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.1"
+  }
+  public: {
+    Tables: {
+      aptitude_questions: {
+        Row: {
+          category: string
+          correct_answer: number
+          created_at: string
+          created_by: string | null
+          explanation: string
+          id: string
+          level: number
+          options: Json
+          question: string
+        }
+        Insert: {
+          category?: string
+          correct_answer: number
+          created_at?: string
+          created_by?: string | null
+          explanation: string
+          id?: string
+          level?: number
+          options: Json
+          question: string
+        }
+        Update: {
+          category?: string
+          correct_answer?: number
+          created_at?: string
+          created_by?: string | null
+          explanation?: string
+          id?: string
+          level?: number
+          options?: Json
+          question?: string
+        }
+        Relationships: []
+      }
+      gd_topics: {
+        Row: {
+          category: string
+          conclusion: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          level: number
+          points_against: Json
+          points_for: Json
+          tips: Json
+          title: string
+        }
+        Insert: {
+          category?: string
+          conclusion: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          level?: number
+          points_against: Json
+          points_for: Json
+          tips: Json
+          title: string
+        }
+        Update: {
+          category?: string
+          conclusion?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          level?: number
+          points_against?: Json
+          points_for?: Json
+          tips?: Json
+          title?: string
+        }
+        Relationships: []
+      }
+      mock_test_results: {
+        Row: {
+          completed_at: string
+          id: string
+          mock_test_id: string
+          passed: boolean
+          percentage: number
+          score: number
+          time_taken_seconds: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          mock_test_id: string
+          passed?: boolean
+          percentage: number
+          score: number
+          time_taken_seconds?: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          mock_test_id?: string
+          passed?: boolean
+          percentage?: number
+          score?: number
+          time_taken_seconds?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mock_test_results_mock_test_id_fkey"
+            columns: ["mock_test_id"]
+            isOneToOne: false
+            referencedRelation: "mock_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mock_tests: {
+        Row: {
+          aptitude_levels: number[] | null
+          aptitude_questions: number | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty: string
+          gd_levels: number[] | null
+          gd_questions: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          technical_levels: number[] | null
+          technical_questions: number | null
+          time_minutes: number
+          total_questions: number
+          updated_at: string | null
+        }
+        Insert: {
+          aptitude_levels?: number[] | null
+          aptitude_questions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty: string
+          gd_levels?: number[] | null
+          gd_questions?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          technical_levels?: number[] | null
+          technical_questions?: number | null
+          time_minutes: number
+          total_questions: number
+          updated_at?: string | null
+        }
+        Update: {
+          aptitude_levels?: number[] | null
+          aptitude_questions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string
+          gd_levels?: number[] | null
+          gd_questions?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          technical_levels?: number[] | null
+          technical_questions?: number | null
+          time_minutes?: number
+          total_questions?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      technical_mcq_questions: {
+        Row: {
+          category: string
+          correct_answer: number
+          created_at: string
+          created_by: string | null
+          explanation: string
+          id: string
+          level: number
+          options: Json
+          question: string
+        }
+        Insert: {
+          category?: string
+          correct_answer: number
+          created_at?: string
+          created_by?: string | null
+          explanation: string
+          id?: string
+          level?: number
+          options: Json
+          question: string
+        }
+        Update: {
+          category?: string
+          correct_answer?: number
+          created_at?: string
+          created_by?: string | null
+          explanation?: string
+          id?: string
+          level?: number
+          options?: Json
+          question?: string
+        }
+        Relationships: []
+      }
+      technical_questions: {
+        Row: {
+          approach: string
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          difficulty: string
+          examples: Json
+          id: string
+          level: number
+          solution: string
+          title: string
+        }
+        Insert: {
+          approach: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          difficulty?: string
+          examples: Json
+          id?: string
+          level?: number
+          solution: string
+          title: string
+        }
+        Update: {
+          approach?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          difficulty?: string
+          examples?: Json
+          id?: string
+          level?: number
+          solution?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      user_code_solutions: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_validated: boolean
+          language: string
+          question_id: string
+          updated_at: string
+          user_id: string
+          validation_result: Json | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_validated?: boolean
+          language?: string
+          question_id: string
+          updated_at?: string
+          user_id: string
+          validation_result?: Json | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_validated?: boolean
+          language?: string
+          question_id?: string
+          updated_at?: string
+          user_id?: string
+          validation_result?: Json | null
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          attempted_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          question_type: string
+          time_spent_seconds: number
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id: string
+          question_type: string
+          time_spent_seconds?: number
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          question_type?: string
+          time_spent_seconds?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      aptitude_questions_public: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          explanation: string | null
+          id: string | null
+          level: number | null
+          options: Json | null
+          question: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Relationships: []
+      }
+      technical_mcq_questions_public: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          created_by: string | null
+          explanation: string | null
+          id: string | null
+          level: number | null
+          options: Json | null
+          question: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          explanation?: string | null
+          id?: string | null
+          level?: number | null
+          options?: Json | null
+          question?: string | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+    }
+    Enums: {
+      app_role: "admin" | "user"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      app_role: ["admin", "user"],
+    },
+  },
+} as const
