@@ -11,7 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Aptitude from "./pages/Aptitude";
 import Technical from "./pages/Technical";
 import Coding from "./pages/Coding";
-import GroupDiscussion from "./pages/GroupDiscussion";
+
 import MockTests from "./pages/MockTests";
 import MockTest from "./pages/MockTest";
 import Admin from "./pages/Admin";
@@ -98,14 +98,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Coding />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/group-discussion"
-        element={
-          <ProtectedRoute>
-            <GroupDiscussion />
           </ProtectedRoute>
         }
       />
