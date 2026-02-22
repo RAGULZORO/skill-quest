@@ -4,13 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { 
-  Brain, 
-  Calculator, 
+import {
+  Brain,
+  Calculator,
   Code,
   Terminal,
-  MessageSquare, 
-  LogOut, 
+  MessageSquare,
+  LogOut,
   Trophy,
   Target,
   Clock,
@@ -18,8 +18,8 @@ import {
   Sparkles,
   User,
   Settings,
-  BookOpen
-} from 'lucide-react';
+  BookOpen } from
+'lucide-react';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
@@ -40,10 +40,10 @@ const Dashboard = () => {
   const fetchUserStats = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('user_progress')
-      .select('is_correct, time_spent_seconds')
-      .eq('user_id', user.id);
+    const { data, error } = await supabase.
+    from('user_progress').
+    select('is_correct, time_spent_seconds').
+    eq('user_id', user.id);
 
     if (error) {
       console.error('Error fetching stats:', error);
@@ -52,12 +52,12 @@ const Dashboard = () => {
 
     if (data && data.length > 0) {
       const totalQuestions = data.length;
-      const correctAnswers = data.filter(p => p.is_correct).length;
+      const correctAnswers = data.filter((p) => p.is_correct).length;
       const totalTime = data.reduce((sum, p) => sum + (p.time_spent_seconds || 0), 0);
-      
+
       setStats({
         questionsSolved: totalQuestions,
-        accuracyRate: Math.round((correctAnswers / totalQuestions) * 100),
+        accuracyRate: Math.round(correctAnswers / totalQuestions * 100),
         timeSpent: Math.round(totalTime / 3600) // Convert to hours
       });
     }
@@ -69,67 +69,67 @@ const Dashboard = () => {
   };
 
   const categories = [
-    {
-      id: 'cheat-codes',
-      title: 'Aptitude Cheat Codes',
-      description: 'All formulas & shortcuts for quick revision before practice',
-      icon: BookOpen,
-      color: 'bg-primary',
-      stats: '100+ Formulas',
-      path: '/cheat-codes',
-    },
-    {
-      id: 'performance',
-      title: 'Performance Report',
-      description: 'Track your progress, identify weak areas, and view detailed analytics',
-      icon: Target,
-      color: 'bg-primary',
-      stats: 'Real-time Analytics',
-      path: '/performance',
-    },
-    {
-      id: 'aptitude',
-      title: 'Aptitude MCQs',
-      description: 'Practice quantitative, logical reasoning, and verbal ability questions',
-      icon: Calculator,
-      color: 'bg-primary',
-      stats: '500+ Questions',
-      path: '/aptitude',
-    },
-    {
-      id: 'technical',
-      title: 'Technical MCQs',
-      description: 'Technical multiple choice questions on programming concepts',
-      icon: Code,
-      color: 'bg-primary',
-      stats: '200+ MCQs',
-      path: '/technical',
-    },
-    {
-      id: 'coding',
-      title: 'Coding Round',
-      description: 'Coding challenges, DSA problems with code editor',
-      icon: Terminal,
-      color: 'bg-primary',
-      stats: '100+ Problems',
-      path: '/coding',
-    },
-    {
-      id: 'mock-test',
-      title: 'Mock Test',
-      description: 'Complete mock tests with aptitude and technical questions combined',
-      icon: Target,
-      color: 'bg-primary',
-      stats: '3 Levels',
-      path: '/mock-tests',
-    },
-  ];
+  {
+    id: 'cheat-codes',
+    title: 'Aptitude Cheat Codes',
+    description: 'All formulas & shortcuts for quick revision before practice',
+    icon: BookOpen,
+    color: 'bg-primary',
+    stats: '100+ Formulas',
+    path: '/cheat-codes'
+  },
+  {
+    id: 'performance',
+    title: 'Performance Report',
+    description: 'Track your progress, identify weak areas, and view detailed analytics',
+    icon: Target,
+    color: 'bg-primary',
+    stats: 'Real-time Analytics',
+    path: '/performance'
+  },
+  {
+    id: 'aptitude',
+    title: 'Aptitude MCQs',
+    description: 'Practice quantitative, logical reasoning, and verbal ability questions',
+    icon: Calculator,
+    color: 'bg-primary',
+    stats: '500+ Questions',
+    path: '/aptitude'
+  },
+  {
+    id: 'technical',
+    title: 'Technical MCQs',
+    description: 'Technical multiple choice questions on programming concepts',
+    icon: Code,
+    color: 'bg-primary',
+    stats: '200+ MCQs',
+    path: '/technical'
+  },
+  {
+    id: 'coding',
+    title: 'Coding Round',
+    description: 'Coding challenges, DSA problems with code editor',
+    icon: Terminal,
+    color: 'bg-primary',
+    stats: '100+ Problems',
+    path: '/coding'
+  },
+  {
+    id: 'mock-test',
+    title: 'Mock Test',
+    description: 'Complete mock tests with aptitude and technical questions combined',
+    icon: Target,
+    color: 'bg-primary',
+    stats: '3 Levels',
+    path: '/mock-tests'
+  }];
+
 
   const quickStats = [
-    { icon: Trophy, label: 'Questions Solved', value: stats.questionsSolved.toString() },
-    { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' },
-    { icon: Clock, label: 'Time Spent', value: `${stats.timeSpent}h` },
-  ];
+  { icon: Trophy, label: 'Questions Solved', value: stats.questionsSolved.toString() },
+  { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' },
+  { icon: Clock, label: 'Time Spent', value: `${stats.timeSpent}h` }];
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -144,29 +144,29 @@ const Dashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {isAdmin && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => navigate('/admin')}
-                className="hidden sm:flex items-center gap-2"
-              >
+            {isAdmin &&
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin')}
+              className="hidden sm:flex items-center gap-2">
+
                 <Settings className="w-4 h-4" />
                 Admin
               </Button>
-            )}
+            }
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
               <User className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm text-foreground font-medium">
                 {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
               </span>
             </div>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground"
-            >
+              className="text-muted-foreground hover:text-foreground">
+
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
@@ -198,17 +198,17 @@ const Dashboard = () => {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto mt-8">
-            {quickStats.map((stat, idx) => (
-              <div 
-                key={idx}
-                className="bg-card rounded-2xl p-4 text-center shadow-card border border-border animate-scale-in"
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
+            {quickStats.map((stat, idx) =>
+            <div
+              key={idx}
+              className="bg-card rounded-2xl p-4 text-center shadow-card border border-border animate-scale-in"
+              style={{ animationDelay: `${idx * 0.1}s` }}>
+
                 <stat.icon className="w-6 h-6 mx-auto mb-2 text-primary" />
                 <p className="text-2xl font-bold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -226,13 +226,13 @@ const Dashboard = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {categories.map((category, idx) => (
-              <button
-                key={category.id}
-                onClick={() => navigate(category.path)}
-                className="group relative bg-card rounded-3xl p-6 text-left shadow-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-slide-up"
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
+            {categories.map((category, idx) =>
+            <button
+              key={category.id}
+              onClick={() => navigate(category.path)}
+              className="group relative bg-card rounded-3xl p-6 text-left shadow-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-slide-up"
+              style={{ animationDelay: `${idx * 0.1}s` }}>
+
                 <div className={`w-14 h-14 rounded-2xl ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                   <category.icon className="w-7 h-7 text-primary-foreground" />
                 </div>
@@ -251,7 +251,7 @@ const Dashboard = () => {
                   <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </div>
               </button>
-            ))}
+            )}
           </div>
         </div>
       </section>
@@ -260,12 +260,12 @@ const Dashboard = () => {
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
-            © 2024 PrepMaster. Practice smarter, succeed faster.
+            © 2026 PrepMaster. Practice smarter, succeed faster.
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Dashboard;
