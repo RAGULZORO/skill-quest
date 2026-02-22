@@ -180,10 +180,9 @@ const Dashboard = () => {
         <div className="absolute bottom-0 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
         
         <div className="container mx-auto px-4 relative">
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-3xl text-left">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 animate-fade-in">
-              <Sparkles className="w-4 h-4" />
-              Welcome back, {user?.email?.split('@')[0]}!
+              Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
             </div>
             
             <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4 animate-slide-up">
