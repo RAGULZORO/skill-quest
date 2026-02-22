@@ -74,7 +74,7 @@ const Dashboard = () => {
       title: 'Aptitude Cheat Codes',
       description: 'All formulas & shortcuts for quick revision before practice',
       icon: BookOpen,
-      color: 'from-violet-500 to-purple-500',
+      color: 'bg-primary',
       stats: '100+ Formulas',
       path: '/cheat-codes',
     },
@@ -83,7 +83,7 @@ const Dashboard = () => {
       title: 'Performance Report',
       description: 'Track your progress, identify weak areas, and view detailed analytics',
       icon: Target,
-      color: 'from-rose-500 to-pink-500',
+      color: 'bg-primary',
       stats: 'Real-time Analytics',
       path: '/performance',
     },
@@ -92,7 +92,7 @@ const Dashboard = () => {
       title: 'Aptitude MCQs',
       description: 'Practice quantitative, logical reasoning, and verbal ability questions',
       icon: Calculator,
-      color: 'from-primary to-accent',
+      color: 'bg-primary',
       stats: '500+ Questions',
       path: '/aptitude',
     },
@@ -101,7 +101,7 @@ const Dashboard = () => {
       title: 'Technical MCQs',
       description: 'Technical multiple choice questions on programming concepts',
       icon: Code,
-      color: 'from-secondary to-primary',
+      color: 'bg-primary',
       stats: '200+ MCQs',
       path: '/technical',
     },
@@ -110,7 +110,7 @@ const Dashboard = () => {
       title: 'Coding Round',
       description: 'Coding challenges, DSA problems with code editor',
       icon: Terminal,
-      color: 'from-emerald-500 to-teal-500',
+      color: 'bg-primary',
       stats: '100+ Problems',
       path: '/coding',
     },
@@ -119,7 +119,7 @@ const Dashboard = () => {
       title: 'Mock Test',
       description: 'Complete mock tests with aptitude and technical questions combined',
       icon: Target,
-      color: 'from-orange-500 to-red-500',
+      color: 'bg-primary',
       stats: '3 Levels',
       path: '/mock-tests',
     },
@@ -233,7 +233,7 @@ const Dashboard = () => {
                 className="group relative bg-card rounded-3xl p-6 text-left shadow-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-slide-up"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                <div className={`w-14 h-14 rounded-2xl ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                   <category.icon className="w-7 h-7 text-primary-foreground" />
                 </div>
 
