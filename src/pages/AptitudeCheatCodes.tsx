@@ -897,7 +897,7 @@ const AptitudeCheatCodes = () => {
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={() => selectedCategory ? setSelectedCategory(null) : navigate('/dashboard')}
+            onClick={() => selectedCategory ? setSelectedCategory(null) : navigate('/')}
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
