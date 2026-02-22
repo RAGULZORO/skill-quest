@@ -181,7 +181,7 @@ const Dashboard = () => {
         
         <div className="container mx-auto px-4 relative">
           <div className="max-w-3xl text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-lg font-semibold mb-6 animate-fade-in">
               Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
             </div>
             
