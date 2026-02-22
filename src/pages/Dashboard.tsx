@@ -158,7 +158,7 @@ const Dashboard = () => {
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
               <User className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm text-foreground font-medium">
-                {user?.email?.split('@')[0]}
+                {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
               </span>
             </div>
             <Button 
