@@ -31,6 +31,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [stats, setStats] = useState({
     questionsSolved: 0,
     accuracyRate: 0,
@@ -151,16 +152,41 @@ const Dashboard = () => {
                 Admin
               </Button>
             }
-            <button
-              onClick={() => navigate('/performance')}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70 transition-colors cursor-pointer"
-            >
-              <User className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-foreground font-medium">
-                {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
-              </span>
-              <ChevronRight className="w-3 h-3 text-muted-foreground" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70 transition-colors cursor-pointer"
+              >
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-foreground font-medium">
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+                </span>
+                <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${profileOpen ? 'rotate-90' : ''}`} />
+              </button>
+
+              {profileOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in">
+                    <button
+                      onClick={() => { navigate('/performance'); setProfileOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <Target className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Performance</span>
+                    </button>
+                    <div className="border-t border-border" />
+                    <button
+                      onClick={() => { handleSignOut(); setProfileOpen(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-destructive"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm font-medium">Log Out</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <Button
               variant="ghost"
               size="icon"
@@ -168,13 +194,6 @@ const Dashboard = () => {
               className="text-muted-foreground hover:text-foreground"
             >
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSignOut}
-              className="text-muted-foreground hover:text-foreground">
-              <LogOut className="w-5 h-5" />
             </Button>
           </div>
 
