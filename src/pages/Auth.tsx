@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Brain, Mail, Lock, User, ArrowRight, Sparkles } from 'lucide-react';
+import { Brain, Mail, Lock, User, ArrowRight, Sparkles, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -28,6 +29,7 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (user) {
@@ -160,7 +162,15 @@ const Auth = () => {
       </div>
 
       {/* Right Panel - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+        >
+          {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+        </Button>
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-2 justify-center mb-8">
