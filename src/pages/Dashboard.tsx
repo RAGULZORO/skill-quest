@@ -18,13 +18,16 @@ import {
   Sparkles,
   User,
   Settings,
-  BookOpen } from
-'lucide-react';
+  BookOpen,
+  Sun,
+  Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [stats, setStats] = useState({
     questionsSolved: 0,
     accuracyRate: 0,
@@ -164,9 +167,16 @@ const Dashboard = () => {
             <Button
               variant="ghost"
               size="icon"
+              onClick={toggleTheme}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleSignOut}
               className="text-muted-foreground hover:text-foreground">
-
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
