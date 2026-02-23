@@ -82,15 +82,6 @@ const Dashboard = () => {
     path: '/cheat-codes'
   },
   {
-    id: 'performance',
-    title: 'Performance Report',
-    description: 'Track your progress, identify weak areas, and view detailed analytics',
-    icon: Target,
-    color: 'bg-primary',
-    stats: 'Real-time Analytics',
-    path: '/performance'
-  },
-  {
     id: 'aptitude',
     title: 'Aptitude MCQs',
     description: 'Practice quantitative, logical reasoning, and verbal ability questions',
@@ -158,12 +149,16 @@ const Dashboard = () => {
                 Admin
               </Button>
             }
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
+            <button
+              onClick={() => navigate('/performance')}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70 transition-colors cursor-pointer"
+            >
               <User className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm text-foreground font-medium">
                 {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
               </span>
-            </div>
+              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+            </button>
             <Button
               variant="ghost"
               size="icon"

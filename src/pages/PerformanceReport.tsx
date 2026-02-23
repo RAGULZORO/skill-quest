@@ -23,6 +23,7 @@ import {
 } from 'recharts';
 import {
   ArrowLeft,
+  User,
   AlertTriangle,
   CheckCircle2,
   XCircle,
@@ -382,12 +383,17 @@ const PerformanceReport = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              Smart Analytics
+              <User className="w-5 h-5 text-primary" />
+              My Profile
             </h1>
-            <p className="text-sm text-muted-foreground">Weak area detection & personalized recommendations</p>
+            <p className="text-sm text-muted-foreground">Performance analytics & personalized recommendations</p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted">
+            <span className="text-sm text-foreground font-medium">
+              {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+            </span>
           </div>
         </div>
       </header>
