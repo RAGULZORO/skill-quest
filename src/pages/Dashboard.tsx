@@ -20,7 +20,9 @@ import {
   Settings,
   BookOpen,
   Sun,
-  Moon } from 'lucide-react';
+  Moon,
+  Menu,
+  X } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 
 const Dashboard = () => {
@@ -28,6 +30,7 @@ const Dashboard = () => {
   const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [stats, setStats] = useState({
     questionsSolved: 0,
     accuracyRate: 0,
@@ -137,21 +140,20 @@ const Dashboard = () => {
             <span className="text-xl font-bold text-foreground">PrepMaster</span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-4">
             {isAdmin &&
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate('/admin')}
-              className="hidden sm:flex items-center gap-2">
-
+              className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 Admin
               </Button>
             }
             <button
               onClick={() => navigate('/performance')}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70 transition-colors cursor-pointer"
             >
               <User className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm text-foreground font-medium">
@@ -175,7 +177,59 @@ const Dashboard = () => {
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
+
+          {/* Mobile hamburger */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="sm:hidden text-muted-foreground hover:text-foreground"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </Button>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-border px-4 py-3 space-y-1 animate-fade-in">
+            <button
+              onClick={() => { navigate('/performance'); setMobileMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors"
+            >
+              <User className="w-5 h-5 text-muted-foreground" />
+              <div className="text-left">
+                <p className="text-sm font-medium text-foreground">Profile</p>
+                <p className="text-xs text-muted-foreground">{user?.user_metadata?.full_name || user?.email?.split('@')[0]}</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => { toggleTheme(); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-muted-foreground" />}
+              <span className="text-sm font-medium text-foreground">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+            </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => { navigate('/admin'); setMobileMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors"
+              >
+                <Settings className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">Admin Panel</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors text-destructive"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-sm font-medium">Log Out</span>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
