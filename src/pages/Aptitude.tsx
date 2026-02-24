@@ -138,86 +138,93 @@ const Aptitude = () => {
 
   const currentQuestion = shuffledQuestions[currentQuestionIndex];
 
-  const handleAnswerSelect = async (index: number) => {
-    if (selectedAnswer !== null || !currentQuestion || validatingAnswer) return;
-    
-    const timeSpent = Math.round((Date.now() - questionStartTime.current) / 1000);
+  const [answerLocked, setAnswerLocked] = useState(false);
+
+  const handleAnswerSelect = (index: number) => {
+    if (answerLocked || !currentQuestion || validatingAnswer) return;
     setSelectedAnswer(index);
-    setValidatingAnswer(true);
-
-    try {
-      // Get session for auth header
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.access_token) {
-        console.error('No session available');
-        setValidatingAnswer(false);
-        return;
-      }
-
-      // Call server-side validation
-      const { data: validationResult, error: validationError } = await supabase.functions.invoke('validate-answer', {
-        body: {
-          questionId: currentQuestion.id,
-          questionType: 'aptitude',
-          selectedAnswer: index
-        }
-      });
-
-      if (validationError) {
-        console.error('Validation error:', validationError);
-        setValidatingAnswer(false);
-        return;
-      }
-
-      const isCorrect = validationResult.isCorrect;
-      
-      setScore(prev => ({
-        correct: prev.correct + (isCorrect ? 1 : 0),
-        attempted: prev.attempted + 1
-      }));
-
-      // Store answer with correct answer and explanation from server
-      setQuestionAnswersHistory(prev => [...prev, {
-        question: currentQuestion,
-        selectedAnswerIndex: index,
-        isCorrect,
-        correctAnswer: validationResult.correctAnswer,
-        explanation: validationResult.explanation
-      }]);
-
-      if (user && !answeredQuestions.has(currentQuestion.id)) {
-        const { error } = await supabase
-          .from('user_progress')
-          .insert({
-            user_id: user.id,
-            question_type: 'aptitude',
-            question_id: currentQuestion.id,
-            is_correct: isCorrect,
-            time_spent_seconds: timeSpent
-          });
-
-        if (error) {
-          console.error('Error saving progress:', error);
-        } else {
-          setAnsweredQuestions(prev => new Set([...prev, currentQuestion.id]));
-        }
-      }
-    } catch (error) {
-      console.error('Error validating answer:', error);
-    } finally {
-      setValidatingAnswer(false);
-    }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    if (!currentQuestion) return;
+
+    // If answer is not yet locked, validate first
+    if (!answerLocked && selectedAnswer !== null) {
+      const timeSpent = Math.round((Date.now() - questionStartTime.current) / 1000);
+      setValidatingAnswer(true);
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) {
+          console.error('No session available');
+          setValidatingAnswer(false);
+          return;
+        }
+
+        const { data: validationResult, error: validationError } = await supabase.functions.invoke('validate-answer', {
+          body: {
+            questionId: currentQuestion.id,
+            questionType: 'aptitude',
+            selectedAnswer: selectedAnswer
+          }
+        });
+
+        if (validationError) {
+          console.error('Validation error:', validationError);
+          setValidatingAnswer(false);
+          return;
+        }
+
+        const isCorrect = validationResult.isCorrect;
+
+        setScore(prev => ({
+          correct: prev.correct + (isCorrect ? 1 : 0),
+          attempted: prev.attempted + 1
+        }));
+
+        setQuestionAnswersHistory(prev => [...prev, {
+          question: currentQuestion,
+          selectedAnswerIndex: selectedAnswer,
+          isCorrect,
+          correctAnswer: validationResult.correctAnswer,
+          explanation: validationResult.explanation
+        }]);
+
+        if (user && !answeredQuestions.has(currentQuestion.id)) {
+          const { error } = await supabase
+            .from('user_progress')
+            .insert({
+              user_id: user.id,
+              question_type: 'aptitude',
+              question_id: currentQuestion.id,
+              is_correct: isCorrect,
+              time_spent_seconds: timeSpent
+            });
+
+          if (error) {
+            console.error('Error saving progress:', error);
+          } else {
+            setAnsweredQuestions(prev => new Set([...prev, currentQuestion.id]));
+          }
+        }
+
+        setAnswerLocked(true);
+      } catch (error) {
+        console.error('Error validating answer:', error);
+      } finally {
+        setValidatingAnswer(false);
+      }
+      return; // Stay on question so user sees locked state, next click advances
+    }
+
+    // Answer already locked — advance to next question
     if (currentQuestionIndex < shuffledQuestions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
+      setAnswerLocked(false);
       setShowExplanation(false);
       questionStartTime.current = Date.now();
     } else {
-      // All questions answered - show results
       setIsLevelComplete(true);
     }
   };
@@ -225,6 +232,7 @@ const Aptitude = () => {
   const handleReset = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
+    setAnswerLocked(false);
     setShowExplanation(false);
     setScore({ correct: 0, attempted: 0 });
     setIsLevelComplete(false);
@@ -234,15 +242,20 @@ const Aptitude = () => {
 
   const getOptionStyle = (index: number) => {
     if (!currentQuestion) return '';
-    // During question phase, all options look the same - no visual feedback
     if (!isLevelComplete) {
       if (selectedAnswer === null) {
         return 'bg-muted/50 hover:bg-muted border-border hover:border-primary/50';
       }
-      // Even after selecting, don't show correct/incorrect until results screen
+      if (!answerLocked) {
+        // Not locked yet — highlight selected, others remain clickable
+        if (index === selectedAnswer) {
+          return 'bg-primary/10 border-primary';
+        }
+        return 'bg-muted/50 hover:bg-muted border-border hover:border-primary/50';
+      }
+      // Locked — dim all options
       return 'bg-muted/30 border-border opacity-50';
     }
-    // After level complete, show correct/incorrect styling on results screen
     if (index === currentQuestion.correct) {
       return 'bg-success/10 border-success text-success';
     }
