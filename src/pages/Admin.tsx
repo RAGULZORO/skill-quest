@@ -1560,7 +1560,231 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Manage Aptitude Questions Tab */}
+          <TabsContent value="manage-apt">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trash2 className="h-5 w-5" />
+                  Manage Aptitude Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {allAptitudeQuestions.length === 0 && !loadingQuestions ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">No questions loaded yet.</p>
+                    <Button onClick={fetchAllAptitudeQuestions}>Load Questions</Button>
+                  </div>
+                ) : loadingQuestions ? (
+                  <div className="text-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-muted-foreground">Loading questions...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">{allAptitudeQuestions.length} questions found</p>
+                      <div className="flex gap-2">
+                        {selectedAptitudeIds.size > 0 && (
+                          <Button variant="destructive" size="sm" disabled={bulkDeleting} onClick={async () => {
+                            if (!confirm(`Delete ${selectedAptitudeIds.size} selected questions?`)) return;
+                            setBulkDeleting(true);
+                            for (const id of selectedAptitudeIds) {
+                              await supabase.from('aptitude_questions').delete().eq('id', id);
+                            }
+                            setBulkDeleting(false);
+                            setSelectedAptitudeIds(new Set());
+                            await fetchAllAptitudeQuestions();
+                            await fetchAptitudeQuestionCounts();
+                            toast({ title: 'Deleted', description: `${selectedAptitudeIds.size} questions deleted` });
+                          }}>
+                            <Trash2 className="h-3 w-3 mr-1" /> Delete Selected ({selectedAptitudeIds.size})
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={fetchAllAptitudeQuestions}>Refresh</Button>
+                      </div>
+                    </div>
+                    {allAptitudeQuestions.map((q) => (
+                      <div key={q.id} className="border rounded-lg p-4 space-y-2">
+                        {editingAptitudeId === q.id && editAptitudeForm ? (
+                          <div className="space-y-3">
+                            <div>
+                              <Label>Question</Label>
+                              <Textarea value={editAptitudeForm.question} onChange={(e) => setEditAptitudeForm((prev: any) => ({ ...prev, question: e.target.value }))} />
+                            </div>
+                            {editAptitudeForm.options.map((opt: string, i: number) => (
+                              <div key={i}>
+                                <Label>Option {i + 1}</Label>
+                                <Input value={opt} onChange={(e) => {
+                                  const newOpts = [...editAptitudeForm.options];
+                                  newOpts[i] = e.target.value;
+                                  setEditAptitudeForm((prev: any) => ({ ...prev, options: newOpts }));
+                                }} />
+                              </div>
+                            ))}
+                            <div>
+                              <Label>Correct Answer</Label>
+                              <Select value={editAptitudeForm.correct_answer.toString()} onValueChange={(v) => setEditAptitudeForm((prev: any) => ({ ...prev, correct_answer: parseInt(v) }))}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {editAptitudeForm.options.map((_: string, i: number) => (
+                                    <SelectItem key={i} value={i.toString()}>Option {i + 1}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Explanation</Label>
+                              <Textarea value={editAptitudeForm.explanation} onChange={(e) => setEditAptitudeForm((prev: any) => ({ ...prev, explanation: e.target.value }))} />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={handleUpdateAptitude} disabled={saving}><Save className="h-3 w-3 mr-1" /> Save</Button>
+                              <Button size="sm" variant="outline" onClick={() => { setEditingAptitudeId(null); setEditAptitudeForm(null); }}>Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-2 flex-1">
+                              <button onClick={() => {
+                                setSelectedAptitudeIds(prev => {
+                                  const next = new Set(prev);
+                                  next.has(q.id) ? next.delete(q.id) : next.add(q.id);
+                                  return next;
+                                });
+                              }} className="mt-1">
+                                {selectedAptitudeIds.has(q.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                              </button>
+                              <div>
+                                <p className="font-medium text-sm">{q.question}</p>
+                                <p className="text-xs text-muted-foreground">Level {q.level} · {q.category}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => { setEditingAptitudeId(q.id); setEditAptitudeForm({ ...q, options: Array.isArray(q.options) ? q.options : [] }); }}><Edit className="h-3 w-3" /></Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDeleteAptitude(q.id)}><Trash2 className="h-3 w-3" /></Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
+          {/* Manage Technical Questions Tab */}
+          <TabsContent value="manage-tech">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trash2 className="h-5 w-5" />
+                  Manage Technical MCQ Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {allTechnicalQuestions.length === 0 && !loadingQuestions ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">No questions loaded yet.</p>
+                    <Button onClick={fetchAllTechnicalQuestions}>Load Questions</Button>
+                  </div>
+                ) : loadingQuestions ? (
+                  <div className="text-center py-8">
+                    <div className="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-muted-foreground">Loading questions...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">{allTechnicalQuestions.length} questions found</p>
+                      <div className="flex gap-2">
+                        {selectedTechnicalIds.size > 0 && (
+                          <Button variant="destructive" size="sm" disabled={bulkDeleting} onClick={async () => {
+                            if (!confirm(`Delete ${selectedTechnicalIds.size} selected questions?`)) return;
+                            setBulkDeleting(true);
+                            for (const id of selectedTechnicalIds) {
+                              await supabase.from('technical_mcq_questions').delete().eq('id', id);
+                            }
+                            setBulkDeleting(false);
+                            setSelectedTechnicalIds(new Set());
+                            await fetchAllTechnicalQuestions();
+                            await fetchTechnicalQuestionCounts();
+                            toast({ title: 'Deleted', description: `${selectedTechnicalIds.size} questions deleted` });
+                          }}>
+                            <Trash2 className="h-3 w-3 mr-1" /> Delete Selected ({selectedTechnicalIds.size})
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={fetchAllTechnicalQuestions}>Refresh</Button>
+                      </div>
+                    </div>
+                    {allTechnicalQuestions.map((q) => (
+                      <div key={q.id} className="border rounded-lg p-4 space-y-2">
+                        {editingTechnicalId === q.id && editTechnicalForm ? (
+                          <div className="space-y-3">
+                            <div>
+                              <Label>Question</Label>
+                              <Textarea value={editTechnicalForm.question} onChange={(e) => setEditTechnicalForm((prev: any) => ({ ...prev, question: e.target.value }))} />
+                            </div>
+                            {editTechnicalForm.options.map((opt: string, i: number) => (
+                              <div key={i}>
+                                <Label>Option {i + 1}</Label>
+                                <Input value={opt} onChange={(e) => {
+                                  const newOpts = [...editTechnicalForm.options];
+                                  newOpts[i] = e.target.value;
+                                  setEditTechnicalForm((prev: any) => ({ ...prev, options: newOpts }));
+                                }} />
+                              </div>
+                            ))}
+                            <div>
+                              <Label>Correct Answer</Label>
+                              <Select value={editTechnicalForm.correct_answer.toString()} onValueChange={(v) => setEditTechnicalForm((prev: any) => ({ ...prev, correct_answer: parseInt(v) }))}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  {editTechnicalForm.options.map((_: string, i: number) => (
+                                    <SelectItem key={i} value={i.toString()}>Option {i + 1}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label>Explanation</Label>
+                              <Textarea value={editTechnicalForm.explanation} onChange={(e) => setEditTechnicalForm((prev: any) => ({ ...prev, explanation: e.target.value }))} />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={handleUpdateTechnical} disabled={saving}><Save className="h-3 w-3 mr-1" /> Save</Button>
+                              <Button size="sm" variant="outline" onClick={() => { setEditingTechnicalId(null); setEditTechnicalForm(null); }}>Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-2 flex-1">
+                              <button onClick={() => {
+                                setSelectedTechnicalIds(prev => {
+                                  const next = new Set(prev);
+                                  next.has(q.id) ? next.delete(q.id) : next.add(q.id);
+                                  return next;
+                                });
+                              }} className="mt-1">
+                                {selectedTechnicalIds.has(q.id) ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground" />}
+                              </button>
+                              <div>
+                                <p className="font-medium text-sm">{q.question}</p>
+                                <p className="text-xs text-muted-foreground">Level {q.level} · {q.category}</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => { setEditingTechnicalId(q.id); setEditTechnicalForm({ ...q, options: Array.isArray(q.options) ? q.options : [] }); }}><Edit className="h-3 w-3" /></Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDeleteTechnical(q.id)}><Trash2 className="h-3 w-3" /></Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* CSV Import - Aptitude Tab */}
           <TabsContent value="import-apt">
