@@ -33,17 +33,22 @@ interface MockTestConfig {
 
 interface Question {
   id: string;
-  type: 'aptitude' | 'technical';
+  type: 'aptitude' | 'technical_mcq';
   question: string;
   options: string[];
-  correctAnswer: number;
-  explanation?: string;
 }
 
-interface Answer {
+interface UserAnswer {
   questionId: string;
+  type: 'aptitude' | 'technical_mcq';
   selectedAnswer: number | null;
+}
+
+interface ValidationResult {
+  questionId: string;
   isCorrect: boolean;
+  correctAnswer: number;
+  explanation?: string;
 }
 
 const MockTest = () => {
@@ -54,12 +59,19 @@ const MockTest = () => {
   const [testConfig, setTestConfig] = useState<MockTestConfig | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, Answer>>({});
+  const [answers, setAnswers] = useState<Record<string, UserAnswer>>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30 * 60); // Default 30 minutes
+  const [timeLeft, setTimeLeft] = useState(30 * 60);
   const [showResults, setShowResults] = useState(false);
+  const [validatedResults, setValidatedResults] = useState<{
+    score: number;
+    totalQuestions: number;
+    percentage: number;
+    passed: boolean;
+    results: ValidationResult[];
+  } | null>(null);
 
   useEffect(() => {
     if (user && testId) {
@@ -67,7 +79,6 @@ const MockTest = () => {
     }
   }, [user, testId]);
 
-  // Timer
   useEffect(() => {
     if (testCompleted || loading || showResults) return;
 
@@ -120,22 +131,19 @@ const MockTest = () => {
     try {
       const formattedQuestions: Question[] = [];
 
-      // Fetch aptitude questions if configured
+      // Fetch aptitude questions using PUBLIC view (no correct_answer exposed)
       if ((config.aptitude_questions || 0) > 0) {
         let aptitudeQuery = supabase
-          .from('aptitude_questions')
+          .from('aptitude_questions_public')
           .select('*');
 
-        // Filter by levels if specified
         if (config.aptitude_levels && config.aptitude_levels.length > 0) {
           aptitudeQuery = aptitudeQuery.in('level', config.aptitude_levels);
         }
 
         const { data: aptitudeData, error: aptitudeError } = await aptitudeQuery;
-
         if (aptitudeError) throw aptitudeError;
 
-        // Shuffle and limit to configured count
         const shuffledAptitude = (aptitudeData || [])
           .sort(() => Math.random() - 0.5)
           .slice(0, config.aptitude_questions || 0);
@@ -146,63 +154,46 @@ const MockTest = () => {
             type: 'aptitude',
             question: q.question,
             options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
-            correctAnswer: q.correct_answer,
-            explanation: q.explanation,
           });
         });
       }
 
-      // Fetch technical questions if configured
+      // Fetch technical MCQ questions using PUBLIC view (no correct_answer exposed)
       if ((config.technical_questions || 0) > 0) {
         let technicalQuery = supabase
-          .from('technical_questions')
+          .from('technical_mcq_questions_public')
           .select('*');
 
-        // Filter by levels if specified
         if (config.technical_levels && config.technical_levels.length > 0) {
           technicalQuery = technicalQuery.in('level', config.technical_levels);
         }
 
         const { data: technicalData, error: technicalError } = await technicalQuery;
-
         if (technicalError) throw technicalError;
 
-        // Shuffle and limit to configured count
         const shuffledTechnical = (technicalData || [])
           .sort(() => Math.random() - 0.5)
           .slice(0, config.technical_questions || 0);
 
         shuffledTechnical.forEach((q: any) => {
-          // Create MCQ-style options from technical question
-          const options = [
-            q.solution?.substring(0, 100) + '...' || 'Option A',
-            'Incorrect approach 1',
-            'Incorrect approach 2', 
-            'Incorrect approach 3',
-          ];
-          
           formattedQuestions.push({
             id: q.id,
-            type: 'technical',
-            question: q.title + ': ' + q.description,
-            options: options,
-            correctAnswer: 0, // First option is correct (the solution)
-            explanation: q.approach,
+            type: 'technical_mcq',
+            question: q.question,
+            options: Array.isArray(q.options) ? q.options : Object.values(q.options || {}),
           });
         });
       }
 
-      // Shuffle all questions together
       const shuffled = formattedQuestions.sort(() => Math.random() - 0.5);
       setQuestions(shuffled);
 
-      // Initialize answers
-      const initialAnswers: Record<string, Answer> = {};
+      const initialAnswers: Record<string, UserAnswer> = {};
       shuffled.forEach((q) => {
         initialAnswers[q.id] = {
           questionId: q.id,
+          type: q.type,
           selectedAnswer: null,
-          isCorrect: false,
         };
       });
       setAnswers(initialAnswers);
@@ -222,8 +213,8 @@ const MockTest = () => {
       ...prev,
       [questionId]: {
         questionId,
+        type: question.type,
         selectedAnswer: answerIndex,
-        isCorrect: answerIndex === question.correctAnswer,
       },
     }));
   };
@@ -233,41 +224,26 @@ const MockTest = () => {
     
     setSubmitting(true);
     try {
-      const score = Object.values(answers).filter((a) => a.isCorrect).length;
-      const percentage = Math.round((score / questions.length) * 100);
-      const passed = percentage >= 80;
       const timeTaken = testConfig.time_minutes * 60 - timeLeft;
 
-      // Save individual question progress
-      const progressEntries = Object.values(answers).map((answer) => ({
-        user_id: user?.id,
-        question_id: answer.questionId,
-        question_type: 'mock_test',
-        is_correct: answer.isCorrect,
-        time_spent_seconds: Math.floor(timeTaken / questions.length),
+      const answerPayload = Object.values(answers).map((a) => ({
+        questionId: a.questionId,
+        type: a.type,
+        selectedAnswer: a.selectedAnswer,
       }));
 
-      const { error: progressError } = await supabase
-        .from('user_progress')
-        .insert(progressEntries);
+      // Server-side validation via edge function
+      const { data, error } = await supabase.functions.invoke('validate-mock-test', {
+        body: {
+          mockTestId: testId,
+          answers: answerPayload,
+          timeTakenSeconds: timeTaken,
+        },
+      });
 
-      if (progressError) throw progressError;
+      if (error) throw error;
 
-      // Save overall test result
-      const { error: resultError } = await supabase
-        .from('mock_test_results')
-        .insert({
-          user_id: user?.id,
-          mock_test_id: testId,
-          score: score,
-          total_questions: questions.length,
-          percentage: percentage,
-          passed: passed,
-          time_taken_seconds: timeTaken,
-        });
-
-      if (resultError) throw resultError;
-
+      setValidatedResults(data);
       setTestCompleted(true);
       setShowResults(true);
       toast.success('Test submitted successfully!');
@@ -279,15 +255,6 @@ const MockTest = () => {
     }
   };
 
-  const getScore = () => {
-    return Object.values(answers).filter((a) => a.isCorrect).length;
-  };
-
-  const getPercentage = () => {
-    if (questions.length === 0) return 0;
-    return Math.round((getScore() / questions.length) * 100);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -296,10 +263,8 @@ const MockTest = () => {
     );
   }
 
-  if (showResults) {
-    const score = getScore();
-    const percentage = getPercentage();
-    const passed = percentage >= 80;
+  if (showResults && validatedResults) {
+    const { score, percentage, passed, totalQuestions } = validatedResults;
 
     return (
       <div className="min-h-screen bg-background">
@@ -339,7 +304,7 @@ const MockTest = () => {
 
             <div className="bg-card rounded-3xl p-8 shadow-card border border-border mb-8">
               <div className="text-5xl font-bold text-foreground mb-2">{percentage}%</div>
-              <div className="text-muted-foreground mb-6">Your Score: {score}/{questions.length}</div>
+              <div className="text-muted-foreground mb-6">Your Score: {score}/{totalQuestions}</div>
               
               <div className="w-full h-4 bg-muted rounded-full overflow-hidden mb-4">
                 <div 
@@ -357,7 +322,7 @@ const MockTest = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <XCircle className="w-4 h-4 text-red-500" />
-                  <span className="text-foreground">{questions.length - score} Incorrect</span>
+                  <span className="text-foreground">{totalQuestions - score} Incorrect</span>
                 </div>
               </div>
             </div>
@@ -408,7 +373,6 @@ const MockTest = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -440,7 +404,6 @@ const MockTest = () => {
         </div>
       </header>
 
-      {/* Progress bar */}
       <div className="w-full h-1 bg-muted">
         <div 
           className="h-full bg-primary transition-all duration-300"
@@ -448,10 +411,8 @@ const MockTest = () => {
         />
       </div>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
-          {/* Question counter */}
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-muted-foreground">
               Question {currentIndex + 1} of {questions.length}
@@ -465,7 +426,6 @@ const MockTest = () => {
             </span>
           </div>
 
-          {/* Question Card */}
           <div className="bg-card rounded-3xl p-6 md:p-8 shadow-card border border-border mb-6">
             <h2 className="text-lg md:text-xl font-medium text-foreground mb-6">
               {currentQuestion?.question}
@@ -496,7 +456,6 @@ const MockTest = () => {
             </RadioGroup>
           </div>
 
-          {/* Navigation */}
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
