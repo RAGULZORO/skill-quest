@@ -360,8 +360,8 @@ const Coding = () => {
                   onClick={() => setSelectedCategory(cat.id)}
                   className="group bg-card rounded-2xl shadow-lg border-2 border-border p-6 text-center hover:border-accent hover:shadow-xl transition-all"
                 >
-                  <div className="w-14 h-14 mx-auto rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4 group-hover:bg-accent/30 transition-colors">
-                    <cat.icon className="w-7 h-7 text-accent" />
+                  <div className="w-14 h-14 mx-auto rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                    <cat.icon className="w-7 h-7 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground">{cat.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{cat.description}</p>
@@ -401,8 +401,8 @@ const Coding = () => {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-3 mb-2">
               {currentCategory && (
-                <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-                  <currentCategory.icon className="w-5 h-5 text-accent" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <currentCategory.icon className="w-5 h-5 text-primary" />
                 </div>
               )}
               <h2 className="text-2xl font-bold text-foreground">{currentCategory?.name}</h2>
@@ -462,10 +462,10 @@ const Coding = () => {
                     </div>
                   )}
 
-                  <div className={`w-14 h-14 mx-auto rounded-xl bg-accent/20 border border-accent/30 flex items-center justify-center mb-4 ${
-                    actuallyUnlocked ? 'group-hover:bg-accent/30' : ''
+                  <div className={`w-14 h-14 mx-auto rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4 ${
+                    actuallyUnlocked ? 'group-hover:bg-primary/20' : ''
                   } transition-colors`}>
-                    <Icon className="w-7 h-7 text-accent" />
+                    <Icon className="w-7 h-7 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground">{config.name}</h3>
                   <p className="text-xs text-muted-foreground">{config.subtitle}</p>
