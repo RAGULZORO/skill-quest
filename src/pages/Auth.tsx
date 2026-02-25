@@ -167,6 +167,7 @@ const Auth = () => {
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
+          aria-label="Toggle theme"
           className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
         >
           {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
