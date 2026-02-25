@@ -1,13 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Brain, Mail, Lock, User, ArrowRight, Sparkles, Sun, Moon } from 'lucide-react';
+import { Brain, Mail, Lock, User, ArrowRight, Sparkles, Sun, Moon, RefreshCw, WifiOff } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { z } from 'zod';
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000;
+
+const isNetworkError = (error: any): boolean => {
+  const msg = error?.message?.toLowerCase() || '';
+  return msg.includes('failed to fetch') || msg.includes('network') || msg.includes('timeout') || msg.includes('err_connection');
+};
+
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -24,6 +34,8 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [networkError, setNetworkError] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const { signIn, signUp, user } = useAuth();
@@ -60,17 +72,49 @@ const Auth = () => {
     }
   };
 
+  const attemptAuth = async (attempt: number = 1): Promise<{ error: any } | null> => {
+    try {
+      if (isLogin) {
+        return await signIn(email, password);
+      } else {
+        return await signUp(email, password, fullName);
+      }
+    } catch (err: any) {
+      if (isNetworkError(err) && attempt < MAX_RETRIES) {
+        setRetryCount(attempt);
+        toast({
+          title: `Connection issue (attempt ${attempt}/${MAX_RETRIES})`,
+          description: `Retrying in ${RETRY_DELAY_MS / 1000}s...`,
+        });
+        await wait(RETRY_DELAY_MS);
+        return attemptAuth(attempt + 1);
+      }
+      throw err;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
     setLoading(true);
+    setNetworkError(false);
+    setRetryCount(0);
 
     try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
+      const result = await attemptAuth();
+      const error = result?.error;
+
+      if (error) {
+        if (isNetworkError(error)) {
+          setNetworkError(true);
+          toast({
+            title: 'Connection failed',
+            description: 'Unable to reach the server. Please check your internet connection and try again.',
+            variant: 'destructive',
+          });
+        } else if (isLogin) {
           toast({
             title: 'Login failed',
             description: error.message === 'Invalid login credentials' 
@@ -78,39 +122,45 @@ const Auth = () => {
               : error.message,
             variant: 'destructive',
           });
+        } else if (error.message?.includes('already registered')) {
+          toast({
+            title: 'Account exists',
+            description: 'This email is already registered. Please login instead.',
+            variant: 'destructive',
+          });
         } else {
           toast({
-            title: 'Welcome back!',
-            description: 'Successfully logged in.',
+            title: 'Registration failed',
+            description: error.message,
+            variant: 'destructive',
           });
-          navigate('/');
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
-        if (error) {
-          if (error.message.includes('already registered')) {
-            toast({
-              title: 'Account exists',
-              description: 'This email is already registered. Please login instead.',
-              variant: 'destructive',
-            });
-          } else {
-            toast({
-              title: 'Registration failed',
-              description: error.message,
-              variant: 'destructive',
-            });
-          }
-        } else {
-          toast({
-            title: 'Account created!',
-            description: 'Welcome to PrepMaster! Start your preparation journey.',
-          });
-          navigate('/');
-        }
+        setNetworkError(false);
+        toast({
+          title: isLogin ? 'Welcome back!' : 'Account created!',
+          description: isLogin ? 'Successfully logged in.' : 'Welcome to PrepMaster! Start your preparation journey.',
+        });
+        navigate('/');
+      }
+    } catch (err: any) {
+      if (isNetworkError(err)) {
+        setNetworkError(true);
+        toast({
+          title: 'Network error',
+          description: 'Could not connect after multiple attempts. Please check your connection and try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Unexpected error',
+          description: 'Something went wrong. Please try again.',
+          variant: 'destructive',
+        });
       }
     } finally {
       setLoading(false);
+      setRetryCount(0);
     }
   };
 
@@ -189,6 +239,15 @@ const Auth = () => {
             </p>
           </div>
 
+          {networkError && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 mb-5">
+                <WifiOff className="w-5 h-5 text-destructive shrink-0" />
+                <p className="text-sm text-destructive">
+                  Connection issue detected. Check your internet and try again.
+                </p>
+              </div>
+            )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div className="space-y-2 animate-fade-in">
@@ -246,7 +305,15 @@ const Auth = () => {
               disabled={loading}
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  {retryCount > 0 ? `Retrying (${retryCount}/${MAX_RETRIES})...` : 'Connecting...'}
+                </div>
+              ) : networkError ? (
+                <>
+                  <RefreshCw className="mr-2 w-5 h-5" />
+                  Retry
+                </>
               ) : (
                 <>
                   {isLogin ? 'Sign In' : 'Create Account'}
