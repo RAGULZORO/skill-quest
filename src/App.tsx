@@ -1,4 +1,3 @@
-import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,25 +5,19 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
+import Index from "./pages/Index";
+import Auth from "./pages/Auth";
+import Dashboard from "./pages/Dashboard";
+import Aptitude from "./pages/Aptitude";
+import Technical from "./pages/Technical";
+import Coding from "./pages/Coding";
 
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Aptitude = lazy(() => import("./pages/Aptitude"));
-const Technical = lazy(() => import("./pages/Technical"));
-const Coding = lazy(() => import("./pages/Coding"));
-const MockTests = lazy(() => import("./pages/MockTests"));
-const MockTest = lazy(() => import("./pages/MockTest"));
-const Admin = lazy(() => import("./pages/Admin"));
-const AptitudeCheatCodes = lazy(() => import("./pages/AptitudeCheatCodes"));
-const PerformanceReport = lazy(() => import("./pages/PerformanceReport"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-
-const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-  </div>
-);
+import MockTests from "./pages/MockTests";
+import MockTest from "./pages/MockTest";
+import Admin from "./pages/Admin";
+import AptitudeCheatCodes from "./pages/AptitudeCheatCodes";
+import PerformanceReport from "./pages/PerformanceReport";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -81,77 +74,75 @@ const AppRoutes = () => {
   }
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/" element={user ? <Dashboard /> : <Navigate to="/auth" replace />} />
-        <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
-        <Route
-          path="/aptitude"
-          element={
-            <ProtectedRoute>
-              <Aptitude />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/technical"
-          element={
-            <ProtectedRoute>
-              <Technical />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/coding"
-          element={
-            <ProtectedRoute>
-              <Coding />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mock-tests"
-          element={
-            <ProtectedRoute>
-              <MockTests />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/mock-test/:testId"
-          element={
-            <ProtectedRoute>
-              <MockTest />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cheat-codes"
-          element={
-            <ProtectedRoute>
-              <AptitudeCheatCodes />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/performance"
-          element={
-            <ProtectedRoute>
-              <PerformanceReport />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Admin />
-            </AdminRoute>
-          }
-        />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <Routes>
+      <Route path="/" element={user ? <Dashboard /> : <Navigate to="/auth" replace />} />
+      <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
+      <Route
+        path="/aptitude"
+        element={
+          <ProtectedRoute>
+            <Aptitude />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/technical"
+        element={
+          <ProtectedRoute>
+            <Technical />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/coding"
+        element={
+          <ProtectedRoute>
+            <Coding />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mock-tests"
+        element={
+          <ProtectedRoute>
+            <MockTests />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/mock-test/:testId"
+        element={
+          <ProtectedRoute>
+            <MockTest />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cheat-codes"
+        element={
+          <ProtectedRoute>
+            <AptitudeCheatCodes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/performance"
+        element={
+          <ProtectedRoute>
+            <PerformanceReport />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <Admin />
+          </AdminRoute>
+        }
+      />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
