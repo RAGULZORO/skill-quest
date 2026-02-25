@@ -133,7 +133,7 @@ const Auth = () => {
             <span className="text-primary-foreground/80">Interview Skills</span>
           </h1>
           
-          <p className="text-lg text-primary-foreground/70 max-w-md mb-10">
+          <p className="text-lg text-primary-foreground/90 max-w-md mb-10">
             Practice aptitude tests, coding challenges, and group discussions. 
             Get interview-ready with our comprehensive preparation platform.
           </p>
@@ -146,7 +146,7 @@ const Auth = () => {
             ].map((item, idx) => (
               <div 
                 key={idx}
-                className="flex items-center gap-3 text-primary-foreground/80"
+                className="flex items-center gap-3 text-primary-foreground/95"
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 <span className="text-xl">{item.icon}</span>
