@@ -113,6 +113,15 @@ const Dashboard = () => {
     path: '/coding'
   },
   {
+    id: 'gd',
+    title: 'Group Discussion',
+    description: 'Study GD topics with YouTube videos, notes & confidence tracking',
+    icon: MessageSquare,
+    color: 'bg-primary',
+    stats: '100+ Topics',
+    path: '/group-discussion'
+  },
+  {
     id: 'mock-test',
     title: 'Mock Test',
     description: 'Complete mock tests with aptitude and technical questions combined',
