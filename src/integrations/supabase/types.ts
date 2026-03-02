@@ -63,6 +63,7 @@ export type Database = {
           points_for: Json
           tips: Json
           title: string
+          youtube_url: string | null
         }
         Insert: {
           category?: string
@@ -76,6 +77,7 @@ export type Database = {
           points_for: Json
           tips: Json
           title: string
+          youtube_url?: string | null
         }
         Update: {
           category?: string
@@ -89,8 +91,47 @@ export type Database = {
           points_for?: Json
           tips?: Json
           title?: string
+          youtube_url?: string | null
         }
         Relationships: []
+      }
+      gd_user_notes: {
+        Row: {
+          confidence_level: number | null
+          created_at: string
+          id: string
+          notes: string
+          topic_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          confidence_level?: number | null
+          created_at?: string
+          id?: string
+          notes?: string
+          topic_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          confidence_level?: number | null
+          created_at?: string
+          id?: string
+          notes?: string
+          topic_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gd_user_notes_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "gd_topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mock_test_results: {
         Row: {
