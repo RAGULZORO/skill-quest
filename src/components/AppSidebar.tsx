@@ -32,46 +32,50 @@ const practiceAreas = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
+  const { setOpenMobile } = useSidebar();
   const location = useLocation();
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-r border-border">
-      <SidebarHeader className="p-4">
-        <NavLink to="/" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
+    <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
+      <SidebarHeader className="px-5 py-5">
+        <NavLink to="/" className="flex items-center gap-3" onClick={() => setOpenMobile(false)}>
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0">
             <Brain className="w-5 h-5 text-primary-foreground" />
           </div>
-          {!collapsed && (
-            <span className="text-lg font-bold text-foreground">PrepMaster</span>
-          )}
+          <span className="text-lg font-bold text-sidebar-foreground tracking-tight">PrepMaster</span>
         </NavLink>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Practice Areas</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 px-3 mb-1">
+            Practice Areas
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {practiceAreas.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === item.url}
-                    tooltip={item.title}
-                  >
-                    <NavLink
-                      to={item.url}
-                      className="hover:bg-muted/50"
-                      activeClassName="bg-primary/10 text-primary font-medium"
+            <SidebarMenu className="gap-0.5">
+              {practiceAreas.map((item) => {
+                const active = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active}
+                      tooltip={item.title}
+                      size="default"
                     >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                      <NavLink
+                        to={item.url}
+                        className="rounded-lg px-3 py-2.5 transition-colors text-sidebar-foreground/80 hover:bg-sidebar-accent/10 hover:text-sidebar-foreground"
+                        activeClassName="bg-primary/10 text-primary font-semibold"
+                        onClick={() => setOpenMobile(false)}
+                      >
+                        <item.icon className="h-[18px] w-[18px] shrink-0" />
+                        <span className="text-[14px]">{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

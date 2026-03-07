@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,12 +10,11 @@ import {
   User,
   Settings,
   LogOut,
-  ChevronRight,
   Sun,
   Moon,
   Target,
+  Menu,
 } from 'lucide-react';
-import { useState } from 'react';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, signOut } = useAuth();
@@ -31,64 +30,29 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-background">
         <AppSidebar />
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top bar */}
-          <header className="sticky top-0 z-50 h-14 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-sm px-4">
-            <SidebarTrigger />
-
+          <header className="sticky top-0 z-50 h-14 flex items-center justify-between border-b border-border bg-background px-4">
             <div className="flex items-center gap-3">
+              <SidebarTrigger className="text-foreground hover:bg-muted" />
+              <span className="text-sm font-semibold text-foreground hidden sm:inline">PrepMaster</span>
+            </div>
+
+            <div className="flex items-center gap-2">
               {isAdmin && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => navigate('/admin')}
-                  className="hidden sm:flex items-center gap-2"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <Settings className="w-4 h-4" />
-                  Admin
+                  <span className="hidden sm:inline ml-1.5">Admin</span>
                 </Button>
               )}
-
-              <div className="relative">
-                <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70 transition-colors cursor-pointer"
-                >
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-foreground font-medium hidden sm:inline">
-                    {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
-                  </span>
-                  <ChevronRight
-                    className={`w-3 h-3 text-muted-foreground transition-transform ${profileOpen ? 'rotate-90' : ''}`}
-                  />
-                </button>
-
-                {profileOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in">
-                      <button
-                        onClick={() => { navigate('/performance'); setProfileOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                      >
-                        <Target className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium text-foreground">Performance</span>
-                      </button>
-                      <div className="border-t border-border" />
-                      <button
-                        onClick={() => { handleSignOut(); setProfileOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-destructive"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span className="text-sm font-medium">Log Out</span>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
 
               <Button
                 variant="ghost"
@@ -96,8 +60,46 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 onClick={toggleTheme}
                 className="text-muted-foreground hover:text-foreground"
               >
-                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
               </Button>
+
+              {/* Profile dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="text-sm text-foreground font-medium hidden sm:inline max-w-[120px] truncate">
+                    {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+                  </span>
+                </button>
+
+                {profileOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1.5 w-48 bg-popover border border-border rounded-lg shadow-lg z-50 overflow-hidden py-1">
+                      <button
+                        onClick={() => { navigate('/performance'); setProfileOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors text-sm text-foreground"
+                      >
+                        <Target className="w-4 h-4 text-primary" />
+                        Performance
+                      </button>
+                      <div className="border-t border-border mx-2 my-1" />
+                      <button
+                        onClick={() => { handleSignOut(); setProfileOpen(false); }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted transition-colors text-sm text-destructive"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Log Out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </header>
 
