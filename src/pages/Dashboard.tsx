@@ -1,358 +1,87 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdmin } from '@/hooks/useAdmin';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import {
-  Brain,
-  Calculator,
-  Code,
-  Terminal,
-  MessageSquare,
-  LogOut,
-  Trophy,
-  Target,
-  Clock,
-  ChevronRight,
-  Sparkles,
-  User,
-  Settings,
-  BookOpen,
-  Sun,
-  Moon,
-  Menu,
-  X } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
+import { Trophy, Target, Clock, Sparkles } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
-  const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     questionsSolved: 0,
     accuracyRate: 0,
-    timeSpent: 0
+    timeSpent: 0,
   });
 
   useEffect(() => {
-    if (user) {
-      fetchUserStats();
-    }
+    if (user) fetchUserStats();
   }, [user]);
 
   const fetchUserStats = async () => {
     if (!user) return;
+    const { data, error } = await supabase
+      .from('user_progress')
+      .select('is_correct, time_spent_seconds')
+      .eq('user_id', user.id);
 
-    const { data, error } = await supabase.
-    from('user_progress').
-    select('is_correct, time_spent_seconds').
-    eq('user_id', user.id);
-
-    if (error) {
-      console.error('Error fetching stats:', error);
-      return;
-    }
+    if (error) { console.error('Error fetching stats:', error); return; }
 
     if (data && data.length > 0) {
       const totalQuestions = data.length;
       const correctAnswers = data.filter((p) => p.is_correct).length;
       const totalTime = data.reduce((sum, p) => sum + (p.time_spent_seconds || 0), 0);
-
       setStats({
         questionsSolved: totalQuestions,
-        accuracyRate: Math.round(correctAnswers / totalQuestions * 100),
-        timeSpent: Math.round(totalTime / 3600) // Convert to hours
+        accuracyRate: Math.round((correctAnswers / totalQuestions) * 100),
+        timeSpent: Math.round(totalTime / 3600),
       });
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
-  };
-
-  const categories = [
-  {
-    id: 'cheat-codes',
-    title: 'Aptitude Cheat Codes',
-    description: 'All formulas & shortcuts for quick revision before practice',
-    icon: BookOpen,
-    color: 'bg-primary',
-    stats: '100+ Formulas',
-    path: '/cheat-codes'
-  },
-  {
-    id: 'aptitude',
-    title: 'Aptitude MCQs',
-    description: 'Practice quantitative, logical reasoning, and verbal ability questions',
-    icon: Calculator,
-    color: 'bg-primary',
-    stats: '500+ Questions',
-    path: '/aptitude'
-  },
-  {
-    id: 'technical',
-    title: 'Technical MCQs',
-    description: 'Technical multiple choice questions on programming concepts',
-    icon: Code,
-    color: 'bg-primary',
-    stats: '200+ MCQs',
-    path: '/technical'
-  },
-  {
-    id: 'coding',
-    title: 'Coding Round',
-    description: 'Coding challenges, DSA problems with code editor',
-    icon: Terminal,
-    color: 'bg-primary',
-    stats: '100+ Problems',
-    path: '/coding'
-  },
-  {
-    id: 'gd',
-    title: 'Group Discussion',
-    description: 'Study GD topics with YouTube videos, notes & confidence tracking',
-    icon: MessageSquare,
-    color: 'bg-primary',
-    stats: '100+ Topics',
-    path: '/group-discussion'
-  },
-  {
-    id: 'mock-test',
-    title: 'Mock Test',
-    description: 'Complete mock tests with aptitude and technical questions combined',
-    icon: Target,
-    color: 'bg-primary',
-    stats: '3 Levels',
-    path: '/mock-tests'
-  }];
-
-
   const quickStats = [
-  { icon: Trophy, label: 'Questions Solved', value: stats.questionsSolved.toString() },
-  { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' },
-  { icon: Clock, label: 'Time Spent', value: `${stats.timeSpent}h` }];
-
+    { icon: Trophy, label: 'Questions Solved', value: stats.questionsSolved.toString() },
+    { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' },
+    { icon: Clock, label: 'Time Spent', value: `${stats.timeSpent}h` },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-hero flex items-center justify-center">
-              <Brain className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">PrepMaster</span>
+    <div className="p-6 md:p-10">
+      {/* Hero */}
+      <section className="relative py-10 md:py-16 overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 mb-10">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
+
+        <div className="relative max-w-3xl mx-auto text-center px-4">
+          <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-lg font-semibold mb-6 animate-fade-in">
+            <Sparkles className="w-5 h-5" />
+            Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
           </div>
 
-          <div className="hidden sm:flex items-center gap-4">
-            {isAdmin &&
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/admin')}
-              className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                Admin
-              </Button>
-            }
-            <div className="relative">
-              <button
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted hover:bg-muted/70 transition-colors cursor-pointer"
-              >
-                <User className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-foreground font-medium">
-                  {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
-                </span>
-                <ChevronRight className={`w-3 h-3 text-muted-foreground transition-transform ${profileOpen ? 'rotate-90' : ''}`} />
-              </button>
+          <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4 animate-slide-up">
+            Ready to ace your
+            <span className="text-gradient block mt-1">next interview?</span>
+          </h1>
 
-              {profileOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-52 bg-card border border-border rounded-xl shadow-lg z-50 overflow-hidden animate-fade-in">
-                    <button
-                      onClick={() => { navigate('/performance'); setProfileOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-                    >
-                      <Target className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium text-foreground">Performance</span>
-                    </button>
-                    <div className="border-t border-border" />
-                    <button
-                      onClick={() => { handleSignOut(); setProfileOpen(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-destructive"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span className="text-sm font-medium">Log Out</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </Button>
-          </div>
-
-          {/* Mobile hamburger */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="sm:hidden text-muted-foreground hover:text-foreground"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </Button>
-        </div>
-
-        {/* Mobile menu dropdown */}
-        {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-border px-4 py-3 space-y-1 animate-fade-in">
-            <button
-              onClick={() => { navigate('/performance'); setMobileMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors"
-            >
-              <User className="w-5 h-5 text-muted-foreground" />
-              <div className="text-left">
-                <p className="text-sm font-medium text-foreground">Profile</p>
-                <p className="text-xs text-muted-foreground">{user?.user_metadata?.full_name || user?.email?.split('@')[0]}</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => { toggleTheme(); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors"
-            >
-              {theme === 'light' ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-muted-foreground" />}
-              <span className="text-sm font-medium text-foreground">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
-            </button>
-
-            {isAdmin && (
-              <button
-                onClick={() => { navigate('/admin'); setMobileMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors"
-              >
-                <Settings className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Admin Panel</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => { handleSignOut(); setMobileMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors text-destructive"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="text-sm font-medium">Log Out</span>
-            </button>
-          </div>
-        )}
-      </header>
-
-      {/* Hero Section */}
-      <section className="relative py-12 md:py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-10 w-96 h-96 bg-secondary/10 rounded-full blur-3xl"></div>
-        
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary/10 text-primary text-lg font-semibold mb-6 animate-fade-in">
-              Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0]}!
-            </div>
-            
-            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4 animate-slide-up">
-              Ready to ace your
-              <span className="text-gradient block mt-1">next interview?</span>
-            </h1>
-            
-            <p className="text-lg text-muted-foreground mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              Practice aptitude tests, coding challenges, and group discussions 
-              to prepare for your dream job.
-            </p>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto mt-8">
-            {quickStats.map((stat, idx) =>
-            <div
-              key={idx}
-              className="bg-card rounded-2xl p-4 text-center shadow-card border border-border animate-scale-in"
-              style={{ animationDelay: `${idx * 0.1}s` }}>
-
-                <stat.icon className="w-6 h-6 mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                <p className="text-xs text-muted-foreground">{stat.label}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      <section className="py-12 md:py-16">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-              Choose Your Practice Area
-            </h2>
-            <p className="text-muted-foreground">
-              Select a category to start practicing
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {categories.map((category, idx) =>
-            <button
-              key={category.id}
-              onClick={() => navigate(category.path)}
-              className="group relative bg-card rounded-3xl p-6 text-left shadow-card border border-border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-slide-up"
-              style={{ animationDelay: `${idx * 0.1}s` }}>
-
-                <div className={`w-14 h-14 rounded-2xl ${category.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <category.icon className="w-7 h-7 text-primary-foreground" />
-                </div>
-
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                  {category.title}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-4">
-                  {category.description}
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
-                    {category.stats}
-                  </span>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                </div>
-              </button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-8 border-t border-border">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2026 PrepMaster. Practice smarter, succeed faster.
+          <p className="text-lg text-muted-foreground animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            Pick a practice area from the sidebar to get started.
           </p>
         </div>
-      </footer>
-    </div>);
+      </section>
 
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+        {quickStats.map((stat, idx) => (
+          <div
+            key={idx}
+            className="bg-card rounded-2xl p-5 text-center shadow-card border border-border animate-scale-in"
+            style={{ animationDelay: `${idx * 0.1}s` }}
+          >
+            <stat.icon className="w-6 h-6 mx-auto mb-2 text-primary" />
+            <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+            <p className="text-xs text-muted-foreground">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default Dashboard;
