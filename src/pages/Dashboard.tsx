@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Target, Clock } from 'lucide-react';
+import { Trophy, Target } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -38,8 +38,8 @@ const Dashboard = () => {
 
   const quickStats = [
   { icon: Trophy, label: 'Questions Solved', value: stats.questionsSolved.toString() },
-  { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' },
-  { icon: Clock, label: 'Time Spent', value: `${stats.timeSpent}h` }];
+  { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' }];
+
 
 
   return (
@@ -67,7 +67,7 @@ const Dashboard = () => {
       </section>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl mx-auto">
         {quickStats.map((stat, idx) =>
         <div
           key={idx}
