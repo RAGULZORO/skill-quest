@@ -2250,9 +2250,9 @@ const Admin = () => {
                     variant="outline"
                     className="w-full gap-2"
                     onClick={() => {
-                      const headers = ['Name', 'Email', 'Aptitude Attempted', 'Aptitude Correct', 'Aptitude Accuracy %', 'Technical Attempted', 'Technical Correct', 'Technical Accuracy %', 'GD Attempted', 'GD Correct', 'GD Accuracy %'];
-                      const rows = userProgressData.map(u =>
-                        [u.name, u.email, u.aptitude.attempted, u.aptitude.correct, u.aptitude.accuracy, u.technical.attempted, u.technical.correct, u.technical.accuracy, u.gd.attempted, u.gd.correct, u.gd.accuracy].map(v => `"${v}"`).join(',')
+                      const headers = ['Name', 'Email', 'Aptitude Attempted', 'Aptitude Correct', 'Aptitude Accuracy %', 'Technical Attempted', 'Technical Correct', 'Technical Accuracy %', 'Coding Attempted', 'Coding Correct', 'Coding Accuracy %', 'GD Attempted', 'GD Correct', 'GD Accuracy %'];
+                      const rows = userProgressData.map((u: any) =>
+                        [u.name, u.email, u.aptitude.attempted, u.aptitude.correct, u.aptitude.accuracy, u.technical.attempted, u.technical.correct, u.technical.accuracy, u.coding.attempted, u.coding.correct, u.coding.accuracy, u.gd.attempted, u.gd.correct, u.gd.accuracy].map(v => `"${v}"`).join(',')
                       );
                       const csv = [headers.join(','), ...rows].join('\n');
                       const blob = new Blob([csv], { type: 'text/csv' });
