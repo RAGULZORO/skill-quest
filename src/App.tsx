@@ -13,6 +13,7 @@ import Aptitude from "./pages/Aptitude";
 import Technical from "./pages/Technical";
 import Coding from "./pages/Coding";
 import GroupDiscussion from "./pages/GroupDiscussion";
+import GDTopicPage from "./pages/GDTopicPage";
 import MockTests from "./pages/MockTests";
 import MockTest from "./pages/MockTest";
 import Admin from "./pages/Admin";
