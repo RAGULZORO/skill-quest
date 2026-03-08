@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell,
@@ -252,301 +253,369 @@ const PerformanceReport = () => {
           <p className="mt-4 text-sm text-muted-foreground">Analyzing your data…</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <Tabs defaultValue="overview" className="space-y-5">
+          <TabsList className="w-full grid grid-cols-3 h-10">
+            <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="strengths" className="text-sm">Strengths & Weaknesses</TabsTrigger>
+            <TabsTrigger value="history" className="text-sm">History</TabsTrigger>
+          </TabsList>
 
-          {/* Stat Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { label: 'Questions Solved', value: overallStats.totalQuestions, icon: Trophy, color: 'text-primary', bg: 'bg-primary/10' },
-              { label: 'Overall Accuracy', value: overallStats.totalQuestions > 0 ? `${overallStats.overallAccuracy}%` : '--', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-              { label: 'Time Practiced', value: formatTime(overallStats.totalTimeSpent), icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-              { label: 'Active Days', value: overallStats.streakDays, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
-            ].map((stat) => (
-              <Card key={stat.label} className="border-border/50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2.5 rounded-lg ${stat.bg}`}>
-                      <stat.icon className={`w-5 h-5 ${stat.color}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xl font-bold text-foreground leading-tight">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground truncate">{stat.label}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Recommendations */}
-          {recommendations.length > 0 && (
-            <Card className="border-border/50">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-primary" />
-                  Recommendations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid sm:grid-cols-2 gap-2.5">
-                  {recommendations.map((rec, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => navigate(rec.path)}
-                      className={`text-left p-3.5 rounded-lg border transition-all hover:shadow-sm ${
-                        rec.priority === 'high' ? 'border-destructive/20 bg-destructive/5 hover:border-destructive/40'
-                        : rec.priority === 'medium' ? 'border-yellow-500/20 bg-yellow-500/5 hover:border-yellow-500/40'
-                        : 'border-border/50 bg-muted/30 hover:border-border'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`${
-                          rec.priority === 'high' ? 'text-destructive' : rec.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-primary'
-                        }`}>{rec.icon}</span>
-                        <span className="text-sm font-semibold text-foreground">{rec.title}</span>
+          {/* ═══════════════════════════════ OVERVIEW TAB ═══════════════════════════════ */}
+          <TabsContent value="overview" className="space-y-5 mt-0">
+            {/* Stat Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: 'Questions Solved', value: overallStats.totalQuestions, icon: Trophy, color: 'text-primary', bg: 'bg-primary/10' },
+                { label: 'Overall Accuracy', value: overallStats.totalQuestions > 0 ? `${overallStats.overallAccuracy}%` : '--', icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                { label: 'Time Practiced', value: formatTime(overallStats.totalTimeSpent), icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                { label: 'Active Days', value: overallStats.streakDays, icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
+              ].map((stat) => (
+                <Card key={stat.label} className="border-border/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-lg ${stat.bg}`}>
+                        <stat.icon className={`w-5 h-5 ${stat.color}`} />
                       </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{rec.description}</p>
-                      <span className="text-xs font-medium text-primary mt-2 inline-flex items-center gap-0.5">
-                        {rec.action} <ChevronRight className="w-3 h-3" />
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                      <div className="min-w-0">
+                        <p className="text-xl font-bold text-foreground leading-tight">{stat.value}</p>
+                        <p className="text-xs text-muted-foreground truncate">{stat.label}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-          {/* Charts Row */}
-          <div className="grid lg:grid-cols-2 gap-4">
-            {/* Accuracy Trend */}
-            <Card className="border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-primary" />
-                  14-Day Accuracy Trend
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {dailyTrend.length < 2 ? (
-                  <div className="text-center py-10 text-muted-foreground">
-                    <Activity className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm font-medium">Practice on 2+ days to see your trend</p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart data={dailyTrend} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
-                      <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} unit="%" />
-                      <Tooltip
-                        contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
-                        formatter={(value: any) => [`${value}%`, 'Accuracy']}
-                      />
-                      <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))', r: 3 }} activeDot={{ r: 5 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Category Bar Chart */}
-            <Card className="border-border/50">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-primary" />
-                  Category Accuracy
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {barChartData.length === 0 ? (
-                  <div className="text-center py-10 text-muted-foreground">
-                    <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm font-medium">No category data yet</p>
-                  </div>
-                ) : (
-                  <>
+            {/* Charts Row */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <Card className="border-border/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    14-Day Accuracy Trend
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {dailyTrend.length < 2 ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <Activity className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm font-medium">Practice on 2+ days to see your trend</p>
+                    </div>
+                  ) : (
                     <ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={barChartData} margin={{ top: 5, right: 10, left: -25, bottom: 30 }}>
+                      <LineChart data={dailyTrend} margin={{ top: 5, right: 10, left: -25, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-                        <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} angle={-25} textAnchor="end" />
+                        <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                         <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} unit="%" />
                         <Tooltip
                           contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
                           formatter={(value: any) => [`${value}%`, 'Accuracy']}
                         />
-                        <Bar dataKey="accuracy" radius={[4, 4, 0, 0]}>
-                          {barChartData.map((_, i) => <Cell key={i} fill={barColors[i]} />)}
-                        </Bar>
-                      </BarChart>
+                        <Line type="monotone" dataKey="accuracy" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))', r: 3 }} activeDot={{ r: 5 }} />
+                      </LineChart>
                     </ResponsiveContainer>
-                    <div className="flex items-center justify-center gap-4 mt-1 text-[10px] text-muted-foreground">
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" />≥80%</span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-yellow-500 inline-block" />60-79%</span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" />&lt;60%</span>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-primary" />
+                    Category Accuracy
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {barChartData.length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <BarChart3 className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm font-medium">No category data yet</p>
                     </div>
-                  </>
+                  ) : (
+                    <>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={barChartData} margin={{ top: 5, right: 10, left: -25, bottom: 30 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                          <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} angle={-25} textAnchor="end" />
+                          <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} unit="%" />
+                          <Tooltip
+                            contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }}
+                            formatter={(value: any) => [`${value}%`, 'Accuracy']}
+                          />
+                          <Bar dataKey="accuracy" radius={[4, 4, 0, 0]}>
+                            {barChartData.map((_, i) => <Cell key={i} fill={barColors[i]} />)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                      <div className="flex items-center justify-center gap-4 mt-1 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" />≥80%</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-yellow-500 inline-block" />60-79%</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-red-500 inline-block" />&lt;60%</span>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recommendations */}
+            {recommendations.length > 0 && (
+              <Card className="border-border/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-primary" />
+                    Recommendations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid sm:grid-cols-2 gap-2.5">
+                    {recommendations.map((rec, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => navigate(rec.path)}
+                        className={`text-left p-3.5 rounded-lg border transition-all hover:shadow-sm ${
+                          rec.priority === 'high' ? 'border-destructive/20 bg-destructive/5 hover:border-destructive/40'
+                          : rec.priority === 'medium' ? 'border-yellow-500/20 bg-yellow-500/5 hover:border-yellow-500/40'
+                          : 'border-border/50 bg-muted/30 hover:border-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`${
+                            rec.priority === 'high' ? 'text-destructive' : rec.priority === 'medium' ? 'text-yellow-600 dark:text-yellow-400' : 'text-primary'
+                          }`}>{rec.icon}</span>
+                          <span className="text-sm font-semibold text-foreground">{rec.title}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{rec.description}</p>
+                        <span className="text-xs font-medium text-primary mt-2 inline-flex items-center gap-0.5">
+                          {rec.action} <ChevronRight className="w-3 h-3" />
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* ═══════════════════════ STRENGTHS & WEAKNESSES TAB ═══════════════════════ */}
+          <TabsContent value="strengths" className="space-y-5 mt-0">
+            {/* Weak & Strong Areas */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <Card className="border-destructive/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                    <TrendingDown className="w-4 h-4" />
+                    Weak Areas {weakAreas.length > 0 && `(${weakAreas.length})`}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">&lt;60% accuracy, 3+ attempts</p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {weakAreas.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">No weak areas detected — great job!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {weakAreas.slice(0, 8).map((area, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-md bg-destructive/5 border border-destructive/10">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <XCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
+                            <span className="text-sm font-medium truncate">{area.category}</span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs text-muted-foreground">{area.correct}/{area.total}</span>
+                            <span className="text-sm font-bold text-destructive">{area.percentage}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="border-emerald-500/20">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-emerald-500">
+                    <Star className="w-4 h-4" />
+                    Strong Areas {strongAreas.length > 0 && `(${strongAreas.length})`}
+                  </CardTitle>
+                  <p className="text-xs text-muted-foreground">≥80% accuracy, 3+ attempts</p>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {strongAreas.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Target className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Keep practicing to unlock strong areas</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {strongAreas.slice(0, 8).map((area, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-md bg-emerald-500/5 border border-emerald-500/10">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span className="text-sm font-medium truncate">{area.category}</span>
+                          </div>
+                          <span className="text-sm font-bold text-emerald-500 shrink-0">{area.percentage}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Full Category Breakdown */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  Full Category Breakdown
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {categoryPerformance.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <Brain className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm font-medium mb-1">No Practice Data Yet</p>
+                    <p className="text-xs mb-4">Start practicing to see category performance</p>
+                    <div className="flex gap-2 justify-center">
+                      <Button size="sm" variant="outline" onClick={() => navigate('/aptitude')}>Aptitude</Button>
+                      <Button size="sm" onClick={() => navigate('/technical')}>Technical</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {categoryPerformance.map((item, idx) => {
+                      const color = item.percentage >= 80 ? 'bg-emerald-500' : item.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500';
+                      const textColor = item.percentage >= 80 ? 'text-emerald-500' : item.percentage >= 60 ? 'text-yellow-500' : 'text-red-500';
+                      return (
+                        <div key={idx} className="p-3 rounded-lg bg-muted/30 border border-border/30">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-sm font-medium truncate">{item.category}</span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                item.type === 'aptitude' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                                : item.type === 'technical' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                                : 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
+                              }`}>{item.type}</span>
+                            </div>
+                            <div className="flex items-center gap-3 shrink-0">
+                              <span className="text-xs text-muted-foreground">{item.correct}/{item.total}</span>
+                              <span className={`text-sm font-bold ${textColor}`}>{item.percentage}%</span>
+                            </div>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className={`h-full ${color} transition-all duration-500`} style={{ width: `${item.percentage}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </CardContent>
             </Card>
-          </div>
+          </TabsContent>
 
-          {/* Weak & Strong Areas Side by Side */}
-          {(weakAreas.length > 0 || strongAreas.length > 0) && (
-            <div className="grid lg:grid-cols-2 gap-4">
-              {weakAreas.length > 0 && (
-                <Card className="border-destructive/20">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2 text-destructive">
-                      <TrendingDown className="w-4 h-4" />
-                      Weak Areas ({weakAreas.length})
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">&lt;60% accuracy, 3+ attempts</p>
-                  </CardHeader>
-                  <CardContent className="pt-0 space-y-2">
-                    {weakAreas.slice(0, 5).map((area, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-md bg-destructive/5 border border-destructive/10">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <XCircle className="w-3.5 h-3.5 text-destructive shrink-0" />
-                          <span className="text-sm font-medium truncate">{area.category}</span>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-muted-foreground">{area.correct}/{area.total}</span>
-                          <span className="text-sm font-bold text-destructive">{area.percentage}%</span>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-
-              {strongAreas.length > 0 && (
-                <Card className="border-emerald-500/20">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2 text-emerald-500">
-                      <Star className="w-4 h-4" />
-                      Strong Areas ({strongAreas.length})
-                    </CardTitle>
-                    <p className="text-xs text-muted-foreground">≥80% accuracy, 3+ attempts</p>
-                  </CardHeader>
-                  <CardContent className="pt-0 space-y-2">
-                    {strongAreas.slice(0, 5).map((area, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 rounded-md bg-emerald-500/5 border border-emerald-500/10">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          <span className="text-sm font-medium truncate">{area.category}</span>
-                        </div>
-                        <span className="text-sm font-bold text-emerald-500 shrink-0">{area.percentage}%</span>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-
-          {/* Full Category Breakdown */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                Full Category Breakdown
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {categoryPerformance.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  <Brain className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm font-medium mb-1">No Practice Data Yet</p>
-                  <p className="text-xs mb-4">Start practicing to see category performance</p>
-                  <div className="flex gap-2 justify-center">
-                    <Button size="sm" variant="outline" onClick={() => navigate('/aptitude')}>Aptitude</Button>
-                    <Button size="sm" onClick={() => navigate('/technical')}>Technical</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {categoryPerformance.map((item, idx) => {
-                    const color = item.percentage >= 80 ? 'bg-emerald-500' : item.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500';
-                    const textColor = item.percentage >= 80 ? 'text-emerald-500' : item.percentage >= 60 ? 'text-yellow-500' : 'text-red-500';
-                    return (
-                      <div key={idx} className="p-3 rounded-lg bg-muted/30 border border-border/30">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-sm font-medium truncate">{item.category}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                              item.type === 'aptitude' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-                              : item.type === 'technical' ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                              : 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
-                            }`}>{item.type}</span>
-                          </div>
-                          <div className="flex items-center gap-3 shrink-0">
-                            <span className="text-xs text-muted-foreground">{item.correct}/{item.total}</span>
-                            <span className={`text-sm font-bold ${textColor}`}>{item.percentage}%</span>
-                          </div>
-                        </div>
-                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div className={`h-full ${color} transition-all duration-500`} style={{ width: `${item.percentage}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Mock Test History */}
-          <Card className="border-border/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                Mock Test History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {mockTestResults.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground">
-                  <Target className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm font-medium mb-1">No Mock Tests Taken</p>
-                  <p className="text-xs mb-4">Take a mock test to evaluate your preparation</p>
-                  <Button size="sm" onClick={() => navigate('/mock-tests')}>Start Mock Test</Button>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {mockTestResults.map((test, idx) => (
-                    <div key={idx} className={`flex items-center justify-between p-3.5 rounded-lg border ${
-                      test.passed ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-destructive/5 border-destructive/20'
-                    }`}>
-                      <div className="flex items-center gap-3 min-w-0">
-                        {test.passed
-                          ? <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                          : <XCircle className="w-5 h-5 text-destructive shrink-0" />
-                        }
-                        <div className="min-w-0">
-                          <h4 className="text-sm font-semibold text-foreground truncate">{test.testName}</h4>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                            <span>{new Date(test.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span>
-                            {test.timeTaken > 0 && <span>· {formatTime(test.timeTaken)}</span>}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right">
-                          <span className={`text-lg font-bold ${test.passed ? 'text-emerald-500' : 'text-destructive'}`}>{test.percentage}%</span>
-                          <p className="text-[10px] text-muted-foreground">{test.score}/{test.total}</p>
-                        </div>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          test.passed ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-destructive/15 text-destructive'
-                        }`}>{test.passed ? 'Passed' : 'Failed'}</span>
-                      </div>
+          {/* ═══════════════════════════════ HISTORY TAB ═══════════════════════════════ */}
+          <TabsContent value="history" className="space-y-5 mt-0">
+            {/* Mock Test Summary */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+              <Card className="border-border/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-primary/10">
+                      <Target className="w-5 h-5 text-primary" />
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    <div>
+                      <p className="text-xl font-bold text-foreground leading-tight">{overallStats.mockTestsTaken}</p>
+                      <p className="text-xs text-muted-foreground">Tests Taken</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-emerald-500/10">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-foreground leading-tight">{overallStats.mockTestsPassed}</p>
+                      <p className="text-xs text-muted-foreground">Tests Passed</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50 col-span-2 lg:col-span-1">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-blue-500/10">
+                      <Activity className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-foreground leading-tight">
+                        {overallStats.mockTestsTaken > 0 ? `${Math.round((overallStats.mockTestsPassed / overallStats.mockTestsTaken) * 100)}%` : '--'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Pass Rate</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-        </div>
+            {/* Mock Test History */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  Mock Test Results
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {mockTestResults.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <Target className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm font-medium mb-1">No Mock Tests Taken</p>
+                    <p className="text-xs mb-4">Take a mock test to evaluate your preparation</p>
+                    <Button size="sm" onClick={() => navigate('/mock-tests')}>Start Mock Test</Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {mockTestResults.map((test, idx) => (
+                      <div key={idx} className={`flex items-center justify-between p-3.5 rounded-lg border ${
+                        test.passed ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-destructive/5 border-destructive/20'
+                      }`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          {test.passed
+                            ? <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                            : <XCircle className="w-5 h-5 text-destructive shrink-0" />
+                          }
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-semibold text-foreground truncate">{test.testName}</h4>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                              <span>{new Date(test.completedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                              {test.timeTaken > 0 && <span>· {formatTime(test.timeTaken)}</span>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <div className="text-right">
+                            <span className={`text-lg font-bold ${test.passed ? 'text-emerald-500' : 'text-destructive'}`}>{test.percentage}%</span>
+                            <p className="text-[10px] text-muted-foreground">{test.score}/{test.total}</p>
+                          </div>
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            test.passed ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-destructive/15 text-destructive'
+                          }`}>{test.passed ? 'Passed' : 'Failed'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
