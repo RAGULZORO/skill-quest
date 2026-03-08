@@ -69,6 +69,7 @@ const AppRoutes = () => {
       <Route path="/technical" element={<ProtectedRoute><Technical /></ProtectedRoute>} />
       <Route path="/coding" element={<ProtectedRoute><Coding /></ProtectedRoute>} />
       <Route path="/group-discussion" element={<ProtectedRoute><GroupDiscussion /></ProtectedRoute>} />
+      <Route path="/group-discussion/:topicId" element={<ProtectedRoute><GDTopicPage /></ProtectedRoute>} />
       <Route path="/mock-tests" element={<ProtectedRoute><MockTests /></ProtectedRoute>} />
       <Route path="/mock-test/:testId" element={<ProtectedRoute><MockTest /></ProtectedRoute>} />
       <Route path="/cheat-codes" element={<ProtectedRoute><AptitudeCheatCodes /></ProtectedRoute>} />
