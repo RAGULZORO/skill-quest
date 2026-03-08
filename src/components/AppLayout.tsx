@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import prepMasterLogo from '@/assets/prepmaster-logo.png';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
