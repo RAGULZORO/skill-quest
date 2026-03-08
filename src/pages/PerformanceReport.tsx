@@ -12,7 +12,7 @@ import {
 import {
   AlertTriangle, CheckCircle2, XCircle, BarChart3, Target,
   TrendingDown, TrendingUp, BookOpen, Lightbulb, Clock, Trophy,
-  Calendar, Activity, Brain, Zap, Star, Flame, ChevronRight, Download,
+  Calendar, Activity, Brain, Zap, Star, Flame, ChevronRight, Download, ArrowLeft,
 } from 'lucide-react';
 import { exportPerformancePDF } from '@/lib/pdfExport';
 
