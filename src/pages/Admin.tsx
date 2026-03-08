@@ -2287,6 +2287,11 @@ const Admin = () => {
                               <th className="text-center py-3 px-4 font-semibold text-foreground">Technical</th>
                             </>
                           )}
+                          {(progressCategory === 'all' || progressCategory === 'coding') && (
+                            <>
+                              <th className="text-center py-3 px-4 font-semibold text-foreground">Coding</th>
+                            </>
+                          )}
                           {(progressCategory === 'all' || progressCategory === 'gd') && (
                             <>
                               <th className="text-center py-3 px-4 font-semibold text-foreground">Group Discussion</th>
