@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Aptitude from "./pages/Aptitude";
 import Technical from "./pages/Technical";
 import Coding from "./pages/Coding";
+import CodingQuestionPage from "./pages/CodingQuestionPage";
 import GroupDiscussion from "./pages/GroupDiscussion";
 import GDTopicPage from "./pages/GDTopicPage";
 import MockTests from "./pages/MockTests";
@@ -69,6 +70,7 @@ const AppRoutes = () => {
       <Route path="/aptitude" element={<ProtectedRoute><Aptitude /></ProtectedRoute>} />
       <Route path="/technical" element={<ProtectedRoute><Technical /></ProtectedRoute>} />
       <Route path="/coding" element={<ProtectedRoute><Coding /></ProtectedRoute>} />
+      <Route path="/coding/:questionId" element={<ProtectedRoute><CodingQuestionPage /></ProtectedRoute>} />
       <Route path="/group-discussion" element={<ProtectedRoute><GroupDiscussion /></ProtectedRoute>} />
       <Route path="/group-discussion/:topicId" element={<ProtectedRoute><GDTopicPage /></ProtectedRoute>} />
       <Route path="/mock-tests" element={<ProtectedRoute><MockTests /></ProtectedRoute>} />
