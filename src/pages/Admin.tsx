@@ -1229,6 +1229,10 @@ const Admin = () => {
               <Trophy className="h-4 w-4" />
               <span className="hidden sm:inline">Test Results</span>
             </TabsTrigger>
+            <TabsTrigger value="gd-admin" className="flex items-center gap-2 whitespace-nowrap" onClick={() => window.location.href = '/admin/gd'}>
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">GD Topics</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* Aptitude Tab */}
