@@ -1189,6 +1189,36 @@ const Admin = () => {
         </div>
       </header>
 
+      {/* Mobile Navigation */}
+      <div className="md:hidden w-full border-b border-border bg-card overflow-x-auto">
+        <div className="flex px-2 py-2 gap-1">
+          {navSections.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => {
+                if (id === 'gd') {
+                  window.location.href = '/admin/gd';
+                  return;
+                }
+                setActiveSection(id);
+                setActiveSubTab('add');
+                if (id === 'mock-tests') fetchMockTests();
+                if (id === 'test-results') fetchMockTestResults();
+                if (id === 'progress') fetchUserProgress();
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
+                activeSection === id
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-muted/50'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="max-w-[1400px] mx-auto flex">
         {/* Sidebar Navigation */}
         <aside className="w-56 shrink-0 border-r border-border bg-card min-h-[calc(100vh-57px)] sticky top-[57px] hidden md:block">
@@ -1219,41 +1249,6 @@ const Admin = () => {
             ))}
           </nav>
         </aside>
-
-        {/* Mobile Navigation */}
-        <div className="md:hidden w-full border-b border-border bg-card overflow-x-auto">
-          <div className="flex px-2 py-2 gap-1">
-            {navSections.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => {
-                  if (id === 'gd') {
-                    window.location.href = '/admin/gd';
-                    return;
-                  }
-                  setActiveSection(id);
-                  setActiveSubTab('add');
-                  if (id === 'mock-tests') fetchMockTests();
-                  if (id === 'test-results') fetchMockTestResults();
-                  if (id === 'progress') fetchUserProgress();
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors ${
-                  activeSection === id
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-muted/50'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-[1400px] mx-auto flex">
-        {/* Spacer for sidebar */}
-        <div className="w-56 shrink-0 hidden md:block" />
 
         {/* Main Content */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 space-y-6">
