@@ -555,9 +555,14 @@ const Aptitude = () => {
                 >
                   ← Back to Levels
                 </button>
-                <span className="text-sm text-muted-foreground">
-                  Question {currentQuestionIndex + 1} of {shuffledQuestions.length}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">
+                    Question {currentQuestionIndex + 1} of {shuffledQuestions.length}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary">
+                    {shuffledQuestions.filter(q => answeredQuestions.has(q.id)).length}/{shuffledQuestions.length}
+                  </span>
+                </div>
                 <button
                   onClick={handleReset}
                   className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
