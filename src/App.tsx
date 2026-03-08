@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Aptitude from "./pages/Aptitude";
 import Technical from "./pages/Technical";
 import Coding from "./pages/Coding";
+import CodingQuestionPage from "./pages/CodingQuestionPage";
 import GroupDiscussion from "./pages/GroupDiscussion";
 import GDTopicPage from "./pages/GDTopicPage";
 import MockTests from "./pages/MockTests";
