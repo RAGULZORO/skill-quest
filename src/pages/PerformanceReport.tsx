@@ -12,7 +12,7 @@ import {
 import {
   AlertTriangle, CheckCircle2, XCircle, BarChart3, Target,
   TrendingDown, TrendingUp, BookOpen, Lightbulb, Clock, Trophy,
-  Calendar, Activity, Brain, Zap, Star, Flame, ChevronRight, Download,
+  Calendar, Activity, Brain, Zap, Star, Flame, ChevronRight, Download, ArrowLeft,
 } from 'lucide-react';
 import { exportPerformancePDF } from '@/lib/pdfExport';
 
@@ -242,11 +242,16 @@ const PerformanceReport = () => {
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       {/* Page Title */}
       <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Performance Report</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Analytics & recommendations for {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
-          </p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate(-1)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Performance Report</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Analytics & recommendations for {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+            </p>
+          </div>
         </div>
         {!loading && (
           <Button
