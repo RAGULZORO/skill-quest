@@ -76,6 +76,7 @@ const AppRoutes = () => {
       <Route path="/cheat-codes" element={<ProtectedRoute><AptitudeCheatCodes /></ProtectedRoute>} />
       <Route path="/performance" element={<ProtectedRoute><PerformanceReport /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+      <Route path="/admin/gd" element={<AdminRoute><GDAdmin /></AdminRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
