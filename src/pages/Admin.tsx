@@ -2251,6 +2251,31 @@ const Admin = () => {
                   {loadingProgress ? 'Loading...' : 'Load User Progress'}
                 </Button>
 
+                {/* Download CSV */}
+                {userProgressData.length > 0 && (
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={() => {
+                      const headers = ['Name', 'Email', 'Aptitude Attempted', 'Aptitude Correct', 'Aptitude Accuracy %', 'Technical Attempted', 'Technical Correct', 'Technical Accuracy %', 'GD Attempted', 'GD Correct', 'GD Accuracy %'];
+                      const rows = userProgressData.map(u =>
+                        [u.name, u.email, u.aptitude.attempted, u.aptitude.correct, u.aptitude.accuracy, u.technical.attempted, u.technical.correct, u.technical.accuracy, u.gd.attempted, u.gd.correct, u.gd.accuracy].map(v => `"${v}"`).join(',')
+                      );
+                      const csv = [headers.join(','), ...rows].join('\n');
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `user_progress_${new Date().toISOString().split('T')[0]}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    <Download className="h-4 w-4" />
+                    Download CSV
+                  </Button>
+                )}
+
                 {/* User Progress Table */}
                 {userProgressData.length > 0 && (
                   <div className="overflow-x-auto">
