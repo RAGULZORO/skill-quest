@@ -9,6 +9,7 @@ import {
   LogOut,
   User,
   ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
