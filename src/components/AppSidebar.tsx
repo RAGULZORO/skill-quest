@@ -5,12 +5,12 @@ import {
   MessageSquare,
   Target,
   BookOpen,
-  Brain,
   LogOut,
   User,
   ChevronRight,
   BarChart3,
 } from 'lucide-react';
+import prepMasterLogo from '@/assets/prepmaster-logo.png';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,9 +57,7 @@ export function AppSidebar() {
     <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
       <SidebarHeader className="px-4 py-5">
         <NavLink to="/" className="flex items-center gap-3 group" onClick={() => setOpenMobile(false)}>
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-md transition-transform duration-200 group-hover:scale-105">
-            <Brain className="w-5 h-5 text-primary-foreground" />
-          </div>
+          <img src={prepMasterLogo} alt="PrepMaster" className="w-10 h-10 rounded-xl shrink-0 shadow-md transition-transform duration-200 group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="text-lg font-bold text-sidebar-foreground tracking-tight">PrepMaster</span>
             <span className="text-[11px] text-muted-foreground -mt-0.5">Placement Prep Hub</span>
