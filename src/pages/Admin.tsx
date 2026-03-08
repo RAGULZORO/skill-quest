@@ -2228,6 +2228,7 @@ const Admin = () => {
                         <SelectItem value="all">All Categories</SelectItem>
                         <SelectItem value="aptitude">Aptitude Only</SelectItem>
                         <SelectItem value="technical">Technical Only</SelectItem>
+                        <SelectItem value="coding">Coding Only</SelectItem>
                         <SelectItem value="gd">GD Only</SelectItem>
                       </SelectContent>
                     </Select>
