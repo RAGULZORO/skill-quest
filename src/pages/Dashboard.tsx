@@ -38,8 +38,8 @@ const Dashboard = () => {
 
   const quickStats = [
   { icon: Trophy, label: 'Questions Solved', value: stats.questionsSolved.toString() },
-  { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' },
-  { icon: Clock, label: 'Time Spent', value: `${stats.timeSpent}h` }];
+  { icon: Target, label: 'Accuracy Rate', value: stats.questionsSolved > 0 ? `${stats.accuracyRate}%` : '--%' }];
+
 
 
   return (
