@@ -17,6 +17,7 @@ import GDTopicPage from "./pages/GDTopicPage";
 import MockTests from "./pages/MockTests";
 import MockTest from "./pages/MockTest";
 import Admin from "./pages/Admin";
+import GDAdmin from "./pages/GDAdmin";
 import AptitudeCheatCodes from "./pages/AptitudeCheatCodes";
 import PerformanceReport from "./pages/PerformanceReport";
 import NotFound from "./pages/NotFound";
