@@ -2345,6 +2345,19 @@ const Admin = () => {
                                   </div>
                                 </td>
                               )}
+                              {(progressCategory === 'all' || progressCategory === 'coding') && (
+                                <td className="py-4 px-4 text-center">
+                                  <div className="inline-block bg-primary/10 rounded-lg p-3">
+                                    <p className="text-lg font-bold text-primary">{(user as any).coding?.attempted || 0}</p>
+                                    <p className="text-xs text-muted-foreground">Attempted</p>
+                                    <p className="text-sm font-semibold text-success mt-1">{(user as any).coding?.correct || 0} correct</p>
+                                    <div className="mt-2 w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                                      <div className="h-full bg-primary transition-all" style={{ width: `${(user as any).coding?.accuracy || 0}%` }} />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">{(user as any).coding?.accuracy || 0}% accuracy</p>
+                                  </div>
+                                </td>
+                              )}
                               {(progressCategory === 'all' || progressCategory === 'gd') && (
                                 <td className="py-4 px-4 text-center">
                                   <div className="inline-block bg-secondary/10 rounded-lg p-3">
