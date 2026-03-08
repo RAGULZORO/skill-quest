@@ -187,48 +187,50 @@ const Admin = () => {
   const fetchUserProgress = async () => {
     setLoadingProgress(true);
     try {
-      const { data: users, error: usersError } = await supabase
+      const { data: allProgress, error: progressError } = await supabase
         .from('user_progress')
-        .select('user_id')
-        .then(async (result) => {
-          if (result.error) return result;
-          // Get unique user IDs
-          const userIds = [...new Set((result.data || []).map((p: any) => p.user_id))];
-          
-          // Fetch user details from profiles table
-          const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('id', userIds);
+        .select('user_id');
 
-          return { data: profiles, error: profilesError };
-        });
+      if (progressError || !allProgress) {
+        console.error('Error fetching progress:', progressError);
+        setLoadingProgress(false);
+        return;
+      }
 
-      if (usersError || !users) {
-        console.error('Error fetching users:', usersError);
+      // Get unique user IDs
+      const userIds = [...new Set(allProgress.map((p: any) => p.user_id))];
+
+      // Fetch user details from profiles table
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('user_id', userIds);
+
+      if (profilesError || !profiles) {
+        console.error('Error fetching profiles:', profilesError);
         setLoadingProgress(false);
         return;
       }
 
       // Fetch progress for each user
       const userProgressList = await Promise.all(
-        users.map(async (user: any) => {
+        profiles.map(async (profile: any) => {
           const { data: aptitudeProgress } = await supabase
             .from('user_progress')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', profile.user_id)
             .eq('question_type', 'aptitude');
 
           const { data: technicalProgress } = await supabase
             .from('user_progress')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', profile.user_id)
             .eq('question_type', 'technical');
 
           const { data: gdProgress } = await supabase
             .from('user_progress')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', profile.user_id)
             .eq('question_type', 'gd');
 
           const aptitudeCorrect = aptitudeProgress?.filter((p: any) => p.is_correct).length || 0;
@@ -248,9 +250,9 @@ const Admin = () => {
             : 0;
 
           return {
-            id: user.id,
-            email: user.email || 'Unknown',
-            name: user.full_name || user.email || 'Unknown User',
+            id: profile.user_id,
+            email: profile.email || 'Unknown',
+            name: profile.full_name || profile.email || 'Unknown User',
             aptitude: {
               attempted: aptitudeProgress?.length || 0,
               correct: aptitudeCorrect,
