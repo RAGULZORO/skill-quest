@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import prepMasterLogo from '@/assets/prepmaster-logo.png';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,13 +38,10 @@ export function AppLayout({ children }: {children: React.ReactNode;}) {
           <header className="sticky top-0 z-50 h-14 flex items-center justify-between border-b border-border bg-background px-4">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-foreground hover:bg-muted" />
-              <div className="flex items-center gap-2">
-                <img src={prepMasterLogo} alt="PrepMaster" className="w-7 h-7 rounded-lg shadow-sm" />
-                <span className="text-foreground text-lg font-bold tracking-tight">PrepMaster</span>
-              </div>
+              <span className="text-foreground hidden sm:inline text-lg font-bold">PrepMaster</span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-xl">
               {isAdmin &&
               <Button
                 variant="ghost"
