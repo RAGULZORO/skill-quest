@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, MessageSquare, Loader2, Play } from 'lucide-react';
 
@@ -62,7 +62,6 @@ const GroupDiscussion = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <button
@@ -83,7 +82,6 @@ const GroupDiscussion = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6">
-        {/* Category Tabs */}
         <div className="max-w-4xl mx-auto mb-8">
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((cat) => (
@@ -102,30 +100,32 @@ const GroupDiscussion = () => {
           </div>
         </div>
 
-        {/* Topics Grid */}
         <div className="max-w-4xl mx-auto">
           {filtered.length === 0 ? (
             <p className="text-muted-foreground text-center py-12">No topics found.</p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((topic) => {
                 const videoId = topic.youtubeUrl ? getYoutubeId(topic.youtubeUrl) : null;
 
                 return (
-                  <div
+                  <button
                     key={topic.id}
-                    className="bg-card rounded-xl border border-border overflow-hidden"
+                    onClick={() => navigate(`/group-discussion/${topic.id}`)}
+                    className="bg-card rounded-xl border border-border overflow-hidden text-left hover:border-primary/40 hover:shadow-lg transition-all group"
                   >
-                    {/* YouTube Video */}
                     {videoId ? (
-                      <div className="aspect-video bg-muted">
-                        <iframe
-                          src={`https://www.youtube.com/embed/${videoId}`}
-                          title={topic.title}
-                          className="w-full h-full"
-                          allowFullScreen
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      <div className="aspect-video bg-muted relative">
+                        <img
+                          src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                          alt={topic.title}
+                          className="w-full h-full object-cover"
                         />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/40 transition-colors">
+                          <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+                            <Play className="w-5 h-5 text-primary-foreground ml-0.5" />
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <div className="aspect-video bg-muted flex items-center justify-center">
@@ -133,19 +133,18 @@ const GroupDiscussion = () => {
                       </div>
                     )}
 
-                    {/* Topic Info */}
                     <div className="p-4">
                       <span className="inline-block text-xs font-medium px-2.5 py-0.5 rounded-full bg-primary/10 text-primary mb-2">
                         {topic.category}
                       </span>
-                      <h3 className="font-semibold text-foreground text-base mb-1">
+                      <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-2">
                         {topic.title}
                       </h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">
+                      <p className="text-xs text-muted-foreground line-clamp-2">
                         {topic.description}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
