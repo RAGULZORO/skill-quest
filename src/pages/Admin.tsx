@@ -224,13 +224,13 @@ const Admin = () => {
           const { data: technicalProgress } = await supabase
             .from('user_progress')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', profile.user_id)
             .eq('question_type', 'technical');
 
           const { data: gdProgress } = await supabase
             .from('user_progress')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', profile.user_id)
             .eq('question_type', 'gd');
 
           const aptitudeCorrect = aptitudeProgress?.filter((p: any) => p.is_correct).length || 0;
@@ -250,9 +250,9 @@ const Admin = () => {
             : 0;
 
           return {
-            id: user.id,
-            email: user.email || 'Unknown',
-            name: user.full_name || user.email || 'Unknown User',
+            id: profile.user_id,
+            email: profile.email || 'Unknown',
+            name: profile.full_name || profile.email || 'Unknown User',
             aptitude: {
               attempted: aptitudeProgress?.length || 0,
               correct: aptitudeCorrect,
