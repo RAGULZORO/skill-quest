@@ -233,41 +233,34 @@ const Admin = () => {
             .eq('user_id', profile.user_id)
             .eq('question_type', 'gd');
 
+          const { data: codingProgress } = await supabase
+            .from('user_progress')
+            .select('*')
+            .eq('user_id', profile.user_id)
+            .eq('question_type', 'coding');
+
           const aptitudeCorrect = aptitudeProgress?.filter((p: any) => p.is_correct).length || 0;
           const technicalCorrect = technicalProgress?.filter((p: any) => p.is_correct).length || 0;
           const gdCorrect = gdProgress?.filter((p: any) => p.is_correct).length || 0;
+          const codingCorrect = codingProgress?.filter((p: any) => p.is_correct).length || 0;
 
           const aptitudeAccuracy = aptitudeProgress && aptitudeProgress.length > 0
-            ? Math.round((aptitudeCorrect / aptitudeProgress.length) * 100)
-            : 0;
-
+            ? Math.round((aptitudeCorrect / aptitudeProgress.length) * 100) : 0;
           const technicalAccuracy = technicalProgress && technicalProgress.length > 0
-            ? Math.round((technicalCorrect / technicalProgress.length) * 100)
-            : 0;
-
+            ? Math.round((technicalCorrect / technicalProgress.length) * 100) : 0;
           const gdAccuracy = gdProgress && gdProgress.length > 0
-            ? Math.round((gdCorrect / gdProgress.length) * 100)
-            : 0;
+            ? Math.round((gdCorrect / gdProgress.length) * 100) : 0;
+          const codingAccuracy = codingProgress && codingProgress.length > 0
+            ? Math.round((codingCorrect / codingProgress.length) * 100) : 0;
 
           return {
             id: profile.user_id,
             email: profile.email || 'Unknown',
             name: profile.full_name || profile.email || 'Unknown User',
-            aptitude: {
-              attempted: aptitudeProgress?.length || 0,
-              correct: aptitudeCorrect,
-              accuracy: aptitudeAccuracy
-            },
-            technical: {
-              attempted: technicalProgress?.length || 0,
-              correct: technicalCorrect,
-              accuracy: technicalAccuracy
-            },
-            gd: {
-              attempted: gdProgress?.length || 0,
-              correct: gdCorrect,
-              accuracy: gdAccuracy
-            }
+            aptitude: { attempted: aptitudeProgress?.length || 0, correct: aptitudeCorrect, accuracy: aptitudeAccuracy },
+            technical: { attempted: technicalProgress?.length || 0, correct: technicalCorrect, accuracy: technicalAccuracy },
+            gd: { attempted: gdProgress?.length || 0, correct: gdCorrect, accuracy: gdAccuracy },
+            coding: { attempted: codingProgress?.length || 0, correct: codingCorrect, accuracy: codingAccuracy },
           };
         })
       );
