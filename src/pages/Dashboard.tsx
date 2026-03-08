@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Trophy, Target, Clock } from 'lucide-react';
+import { Trophy, Target } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
