@@ -138,7 +138,7 @@ const Admin = () => {
   const [userProgressData, setUserProgressData] = useState<any[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [progressCategory, setProgressCategory] = useState<'all' | 'aptitude' | 'technical' | 'gd'>('all');
+  const [progressCategory, setProgressCategory] = useState<'all' | 'aptitude' | 'technical' | 'coding' | 'gd'>('all');
 
   // Mock Tests state
   const [mockTests, setMockTests] = useState<MockTest[]>([]);
@@ -233,41 +233,34 @@ const Admin = () => {
             .eq('user_id', profile.user_id)
             .eq('question_type', 'gd');
 
+          const { data: codingProgress } = await supabase
+            .from('user_progress')
+            .select('*')
+            .eq('user_id', profile.user_id)
+            .eq('question_type', 'coding');
+
           const aptitudeCorrect = aptitudeProgress?.filter((p: any) => p.is_correct).length || 0;
           const technicalCorrect = technicalProgress?.filter((p: any) => p.is_correct).length || 0;
           const gdCorrect = gdProgress?.filter((p: any) => p.is_correct).length || 0;
+          const codingCorrect = codingProgress?.filter((p: any) => p.is_correct).length || 0;
 
           const aptitudeAccuracy = aptitudeProgress && aptitudeProgress.length > 0
-            ? Math.round((aptitudeCorrect / aptitudeProgress.length) * 100)
-            : 0;
-
+            ? Math.round((aptitudeCorrect / aptitudeProgress.length) * 100) : 0;
           const technicalAccuracy = technicalProgress && technicalProgress.length > 0
-            ? Math.round((technicalCorrect / technicalProgress.length) * 100)
-            : 0;
-
+            ? Math.round((technicalCorrect / technicalProgress.length) * 100) : 0;
           const gdAccuracy = gdProgress && gdProgress.length > 0
-            ? Math.round((gdCorrect / gdProgress.length) * 100)
-            : 0;
+            ? Math.round((gdCorrect / gdProgress.length) * 100) : 0;
+          const codingAccuracy = codingProgress && codingProgress.length > 0
+            ? Math.round((codingCorrect / codingProgress.length) * 100) : 0;
 
           return {
             id: profile.user_id,
             email: profile.email || 'Unknown',
             name: profile.full_name || profile.email || 'Unknown User',
-            aptitude: {
-              attempted: aptitudeProgress?.length || 0,
-              correct: aptitudeCorrect,
-              accuracy: aptitudeAccuracy
-            },
-            technical: {
-              attempted: technicalProgress?.length || 0,
-              correct: technicalCorrect,
-              accuracy: technicalAccuracy
-            },
-            gd: {
-              attempted: gdProgress?.length || 0,
-              correct: gdCorrect,
-              accuracy: gdAccuracy
-            }
+            aptitude: { attempted: aptitudeProgress?.length || 0, correct: aptitudeCorrect, accuracy: aptitudeAccuracy },
+            technical: { attempted: technicalProgress?.length || 0, correct: technicalCorrect, accuracy: technicalAccuracy },
+            gd: { attempted: gdProgress?.length || 0, correct: gdCorrect, accuracy: gdAccuracy },
+            coding: { attempted: codingProgress?.length || 0, correct: codingCorrect, accuracy: codingAccuracy },
           };
         })
       );
@@ -2235,6 +2228,7 @@ const Admin = () => {
                         <SelectItem value="all">All Categories</SelectItem>
                         <SelectItem value="aptitude">Aptitude Only</SelectItem>
                         <SelectItem value="technical">Technical Only</SelectItem>
+                        <SelectItem value="coding">Coding Only</SelectItem>
                         <SelectItem value="gd">GD Only</SelectItem>
                       </SelectContent>
                     </Select>
@@ -2257,9 +2251,9 @@ const Admin = () => {
                     variant="outline"
                     className="w-full gap-2"
                     onClick={() => {
-                      const headers = ['Name', 'Email', 'Aptitude Attempted', 'Aptitude Correct', 'Aptitude Accuracy %', 'Technical Attempted', 'Technical Correct', 'Technical Accuracy %', 'GD Attempted', 'GD Correct', 'GD Accuracy %'];
-                      const rows = userProgressData.map(u =>
-                        [u.name, u.email, u.aptitude.attempted, u.aptitude.correct, u.aptitude.accuracy, u.technical.attempted, u.technical.correct, u.technical.accuracy, u.gd.attempted, u.gd.correct, u.gd.accuracy].map(v => `"${v}"`).join(',')
+                      const headers = ['Name', 'Email', 'Aptitude Attempted', 'Aptitude Correct', 'Aptitude Accuracy %', 'Technical Attempted', 'Technical Correct', 'Technical Accuracy %', 'Coding Attempted', 'Coding Correct', 'Coding Accuracy %', 'GD Attempted', 'GD Correct', 'GD Accuracy %'];
+                      const rows = userProgressData.map((u: any) =>
+                        [u.name, u.email, u.aptitude.attempted, u.aptitude.correct, u.aptitude.accuracy, u.technical.attempted, u.technical.correct, u.technical.accuracy, u.coding.attempted, u.coding.correct, u.coding.accuracy, u.gd.attempted, u.gd.correct, u.gd.accuracy].map(v => `"${v}"`).join(',')
                       );
                       const csv = [headers.join(','), ...rows].join('\n');
                       const blob = new Blob([csv], { type: 'text/csv' });
@@ -2291,6 +2285,11 @@ const Admin = () => {
                           {(progressCategory === 'all' || progressCategory === 'technical') && (
                             <>
                               <th className="text-center py-3 px-4 font-semibold text-foreground">Technical</th>
+                            </>
+                          )}
+                          {(progressCategory === 'all' || progressCategory === 'coding') && (
+                            <>
+                              <th className="text-center py-3 px-4 font-semibold text-foreground">Coding</th>
                             </>
                           )}
                           {(progressCategory === 'all' || progressCategory === 'gd') && (
@@ -2343,6 +2342,19 @@ const Admin = () => {
                                       />
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">{user.technical.accuracy}% accuracy</p>
+                                  </div>
+                                </td>
+                              )}
+                              {(progressCategory === 'all' || progressCategory === 'coding') && (
+                                <td className="py-4 px-4 text-center">
+                                  <div className="inline-block bg-primary/10 rounded-lg p-3">
+                                    <p className="text-lg font-bold text-primary">{(user as any).coding?.attempted || 0}</p>
+                                    <p className="text-xs text-muted-foreground">Attempted</p>
+                                    <p className="text-sm font-semibold text-success mt-1">{(user as any).coding?.correct || 0} correct</p>
+                                    <div className="mt-2 w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                                      <div className="h-full bg-primary transition-all" style={{ width: `${(user as any).coding?.accuracy || 0}%` }} />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">{(user as any).coding?.accuracy || 0}% accuracy</p>
                                   </div>
                                 </td>
                               )}
