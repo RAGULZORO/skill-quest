@@ -17,6 +17,7 @@ import GDTopicPage from "./pages/GDTopicPage";
 import MockTests from "./pages/MockTests";
 import MockTest from "./pages/MockTest";
 import Admin from "./pages/Admin";
+import GDAdmin from "./pages/GDAdmin";
 import AptitudeCheatCodes from "./pages/AptitudeCheatCodes";
 import PerformanceReport from "./pages/PerformanceReport";
 import NotFound from "./pages/NotFound";
@@ -75,6 +76,7 @@ const AppRoutes = () => {
       <Route path="/cheat-codes" element={<ProtectedRoute><AptitudeCheatCodes /></ProtectedRoute>} />
       <Route path="/performance" element={<ProtectedRoute><PerformanceReport /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
+      <Route path="/admin/gd" element={<AdminRoute><GDAdmin /></AdminRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
