@@ -138,7 +138,7 @@ const Admin = () => {
   const [userProgressData, setUserProgressData] = useState<any[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [progressCategory, setProgressCategory] = useState<'all' | 'aptitude' | 'technical' | 'gd'>('all');
+  const [progressCategory, setProgressCategory] = useState<'all' | 'aptitude' | 'technical' | 'coding' | 'gd'>('all');
 
   // Mock Tests state
   const [mockTests, setMockTests] = useState<MockTest[]>([]);
