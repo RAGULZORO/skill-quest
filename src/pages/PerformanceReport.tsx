@@ -12,8 +12,9 @@ import {
 import {
   AlertTriangle, CheckCircle2, XCircle, BarChart3, Target,
   TrendingDown, TrendingUp, BookOpen, Lightbulb, Clock, Trophy,
-  Calendar, Activity, Brain, Zap, Star, Flame, ChevronRight,
+  Calendar, Activity, Brain, Zap, Star, Flame, ChevronRight, Download,
 } from 'lucide-react';
+import { exportPerformancePDF } from '@/lib/pdfExport';
 
 interface CategoryPerformance {
   category: string;
@@ -240,11 +241,34 @@ const PerformanceReport = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
       {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Performance Report</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Analytics & recommendations for {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Performance Report</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Analytics & recommendations for {user?.user_metadata?.full_name || user?.email?.split('@')[0]}
+          </p>
+        </div>
+        {!loading && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5"
+            onClick={() => {
+              const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+              exportPerformancePDF({
+                userName,
+                stats: overallStats,
+                weakAreas: weakAreas.map((a) => ({ category: a.category, percentage: a.percentage, correct: a.correct, total: a.total })),
+                strongAreas: strongAreas.map((a) => ({ category: a.category, percentage: a.percentage })),
+                categoryPerformance: categoryPerformance.map((c) => ({ category: c.category, percentage: c.percentage, correct: c.correct, total: c.total, type: c.type })),
+                mockTestResults: mockTestResults.map((m) => ({ testName: m.testName, percentage: m.percentage, passed: m.passed, completedAt: m.completedAt, score: m.score, total: m.total })),
+              });
+            }}
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export PDF</span>
+          </Button>
+        )}
       </div>
 
       {loading ? (
