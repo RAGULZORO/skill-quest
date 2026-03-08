@@ -495,12 +495,7 @@ const Technical = () => {
             <div className="mb-6">
               <div className="flex justify-between text-sm text-muted-foreground mb-2">
                 <span>Question {currentQuestionIndex + 1} of {shuffledQuestions.length}</span>
-                <div className="flex items-center gap-3">
-                  <span>{Math.round(((currentQuestionIndex) / shuffledQuestions.length) * 100)}% complete</span>
-                  <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-primary/10 text-primary">
-                    {shuffledQuestions.filter(q => answeredQuestions.has(q.id)).length}/{shuffledQuestions.length}
-                  </span>
-                </div>
+                <span>{Math.round(((currentQuestionIndex) / shuffledQuestions.length) * 100)}% complete</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div 
