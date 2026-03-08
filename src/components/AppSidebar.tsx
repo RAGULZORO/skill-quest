@@ -36,6 +36,7 @@ const practiceAreas = [
   { title: 'Coding Round', url: '/coding', icon: Terminal, color: 'text-purple-500' },
   { title: 'Group Discussion', url: '/group-discussion', icon: MessageSquare, color: 'text-rose-500' },
   { title: 'Mock Test', url: '/mock-tests', icon: Target, color: 'text-cyan-500' },
+  { title: 'Performance', url: '/performance', icon: BarChart3, color: 'text-orange-500' },
 ];
 
 export function AppSidebar() {
