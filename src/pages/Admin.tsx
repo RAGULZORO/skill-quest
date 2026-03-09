@@ -285,21 +285,25 @@ const Admin = () => {
 
       if (resultsError) throw resultsError;
 
+      if (!results || results.length === 0) {
+        setMockTestResults([]);
+        setLoadingResults(false);
+        return;
+      }
+
       // Get unique user IDs and mock test IDs
-      const userIds = [...new Set((results || []).map((r: any) => r.user_id))];
-      const testIds = [...new Set((results || []).map((r: any) => r.mock_test_id))];
+      const userIds = [...new Set(results.map((r: any) => r.user_id))];
+      const testIds = [...new Set(results.map((r: any) => r.mock_test_id))];
 
       // Fetch user profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, email, full_name')
-        .in('user_id', userIds);
+      const { data: profiles } = userIds.length > 0
+        ? await supabase.from('profiles').select('user_id, email, full_name').in('user_id', userIds)
+        : { data: [] };
 
-      // Fetch mock test names
-      const { data: tests } = await supabase
-        .from('mock_tests')
-        .select('id, name')
-        .in('id', testIds);
+      // Fetch mock test names (admin can now see all tests including inactive)
+      const { data: tests } = testIds.length > 0
+        ? await supabase.from('mock_tests').select('id, name').in('id', testIds)
+        : { data: [] };
 
       // Map user and test data to results
       const enrichedResults = (results || []).map((result: any) => {
