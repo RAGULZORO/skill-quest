@@ -99,7 +99,7 @@ export function AppSidebar() {
                           collapsed ? "px-2 py-2.5 justify-center" : "px-3 py-2.5"
                         )}
                         activeClassName="bg-primary/10 text-primary font-semibold shadow-sm"
-                        onClick={() => setOpenMobile(false)}
+                        onClick={() => { setOpenMobile(false); if (state !== 'collapsed') toggleSidebar(); }}
                       >
                         <div className={cn(
                           "p-1.5 rounded-md transition-colors duration-200",
