@@ -131,8 +131,7 @@ export function AppSidebar() {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                 onClick={() => { navigate('/performance'); setOpenMobile(false); }}>
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
               <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0 ring-2 ring-primary/20">
                 <span className="text-xs font-bold text-primary">{initials}</span>
               </div>
