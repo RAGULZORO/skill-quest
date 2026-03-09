@@ -121,13 +121,20 @@ export function AppSidebar() {
 
       <SidebarFooter className={cn("px-3 pb-4 pt-2 border-t border-sidebar-border", collapsed && "px-1")}>
         {collapsed ? (
-          <div
-            className="flex items-center justify-center py-2"
-            title={displayName}
-          >
-            <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0 ring-2 ring-primary/20">
+          <div className="flex flex-col items-center gap-2 py-2">
+            <div
+              className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0 ring-2 ring-primary/20"
+              title={displayName}
+            >
               <span className="text-[10px] font-bold text-primary">{initials}</span>
             </div>
+            <button
+              onClick={() => { handleSignOut(); setOpenMobile(false); }}
+              className="p-1.5 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+              title="Log Out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         ) : (
           <>
