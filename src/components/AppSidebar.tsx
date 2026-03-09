@@ -41,7 +41,7 @@ const practiceAreas = [
 ];
 
 export function AppSidebar() {
-  const { setOpenMobile, state } = useSidebar();
+  const { setOpenMobile, state, toggleSidebar } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { user, signOut } = useAuth();
