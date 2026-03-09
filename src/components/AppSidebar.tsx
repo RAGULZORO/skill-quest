@@ -10,6 +10,7 @@ import {
   ChevronRight,
   BarChart3,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import prepMasterLogo from '@/assets/prepmaster-logo.png';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
