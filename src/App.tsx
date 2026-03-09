@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useAdmin } from "@/hooks/useAdmin";
 import { AppLayout } from "@/components/AppLayout";
-import Index from "./pages/Index";
+
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Aptitude from "./pages/Aptitude";
