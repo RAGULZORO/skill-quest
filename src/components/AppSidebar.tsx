@@ -122,8 +122,7 @@ export function AppSidebar() {
       <SidebarFooter className={cn("px-3 pb-4 pt-2 border-t border-sidebar-border", collapsed && "px-1")}>
         {collapsed ? (
           <div
-            className="flex items-center justify-center py-2 cursor-pointer"
-            onClick={() => { navigate('/performance'); setOpenMobile(false); }}
+            className="flex items-center justify-center py-2"
             title={displayName}
           >
             <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0 ring-2 ring-primary/20">
@@ -132,8 +131,7 @@ export function AppSidebar() {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                 onClick={() => { navigate('/performance'); setOpenMobile(false); }}>
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
               <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0 ring-2 ring-primary/20">
                 <span className="text-xs font-bold text-primary">{initials}</span>
               </div>
