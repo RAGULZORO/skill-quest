@@ -56,7 +56,7 @@ export function AppSidebar() {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border">
       <SidebarHeader className={cn("px-4 py-5", collapsed && "px-2 py-3")}>
         <NavLink to="/" className="flex items-center gap-3 group" onClick={() => setOpenMobile(false)}>
           <img src={prepMasterLogo} alt="PrepMaster" className="w-9 h-9 rounded-xl shrink-0 shadow-md transition-transform duration-200 group-hover:scale-105" />
